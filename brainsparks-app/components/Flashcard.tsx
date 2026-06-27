@@ -11,7 +11,7 @@ interface QuizProps {
   category: string;
   reviewMode: 'instan' | 'akhir';
   onNext: (isCorrect: boolean) => void;
-  onNextWithIndex?: (isCorrect: boolean, chosenOptionIndex: number | null) => void; // Prop opsional penampung data index
+  onNextWithIndex?: (isCorrect: boolean, chosenOptionIndex: number | null) => void;
 }
 
 export const FlashcardComponent: React.FC<QuizProps> = ({
@@ -43,7 +43,6 @@ export const FlashcardComponent: React.FC<QuizProps> = ({
 
     const isCorrect = selectedOption === correctAnswerIndex;
 
-    // Jika Mode Instan (Belajar langsung)
     if (reviewMode === 'instan') {
       if (!hasSubmitted) {
         setHasSubmitted(true);
@@ -54,9 +53,7 @@ export const FlashcardComponent: React.FC<QuizProps> = ({
           onNext(isCorrect);
         }
       }
-    } 
-    // Jika Mode Akhir (AssessmentDay Style)
-    else {
+    } else {
       if (onNextWithIndex) {
         onNextWithIndex(isCorrect, selectedOption);
       } else {
@@ -119,7 +116,7 @@ export const FlashcardComponent: React.FC<QuizProps> = ({
       <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col gap-4">
         {reviewMode === 'instan' && hasSubmitted && (
           <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm text-slate-600 leading-relaxed">
-            <strong className="text-slate-800 block mb-1">💡 Penjelasan:</strong>
+            <strong className="text-slate-800 block mb-1">💡 Explanation:</strong>
             {explanation}
           </div>
         )}
@@ -132,8 +129,8 @@ export const FlashcardComponent: React.FC<QuizProps> = ({
           }`}
         >
           {reviewMode === 'instan' 
-            ? (!hasSubmitted ? 'Kunci Jawaban' : 'Lanjut ke Soal Berikutnya →')
-            : 'Simpan & Lanjut →'}
+            ? (!hasSubmitted ? 'Lock Answer' : 'Next Question →')
+            : 'Save & Continue →'}
         </button>
       </div>
     </div>

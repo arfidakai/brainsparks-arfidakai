@@ -5,8 +5,13 @@ import { mockQuizQuestions, QuizQuestion } from '../data/flashcards';
 import { FlashcardComponent } from '../components/Flashcard';
 
 export default function Home() {
+  // NAVIGATION & VIEW STATES
+  // 'dashboard' = Halaman Utama Pembelajaran
+  // 'quiz' = Sesi Kuis Berjalan
+  // 'review' = Halaman Laporan Penjelasan Akhir
+  const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review'>('dashboard');
+  
   // CONFIGURATION STATES
-  const [isConfiguring, setIsConfiguring] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Logic' | 'Programming'>('All');
   const [reviewMode, setReviewMode] = useState<'instan' | 'akhir'>('instan');
 
@@ -16,30 +21,56 @@ export default function Home() {
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: boolean | null }>({});
   const [selectedIndicesTracker, setSelectedIndicesTracker] = useState<{ [key: number]: number | null }>({});
 
-  const [isFinished, setIsFinished] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(7200); // 120 Mins
-  const [totalXp, setTotalXp] = useState<number>(0);
+  const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
 
+  // LIFETIME STATISTICS (Disimpan di localStorage)
+  const [totalXp, setTotalXp] = useState<number>(0);
+  const [testsTaken, setTestsTaken] = useState<number>(0);
+  const [lifetimeCorrect, setLifetimeCorrect] = useState<number>(0);
+  const [lifetimeWrong, setLifetimeWrong] = useState<number>(0);
+
+  // Load lifetime metrics dari localStorage saat pertama kali dibuka
   useEffect(() => {
-    const savedXp = localStorage.getItem('apple_academy_xp');
-    if (savedXp) setTotalXp(parseInt(savedXp, 10));
+    if (typeof window !== 'undefined') {
+      setTotalXp(parseInt(localStorage.getItem('apple_academy_xp') || '0', 10));
+      setTestsTaken(parseInt(localStorage.getItem('apple_academy_tests') || '0', 10));
+      setLifetimeCorrect(parseInt(localStorage.getItem('apple_academy_correct') || '0', 10));
+      setLifetimeWrong(parseInt(localStorage.getItem('apple_academy_wrong') || '0', 10));
+    }
   }, []);
 
+  // Global Timer Effect
   useEffect(() => {
-    if (timeLeft <= 0 || isFinished || isConfiguring) {
-      if (timeLeft === 0 && !isConfiguring) finishQuiz(null, null);
-      return;
-    }
+    if (!isTimerActive || timeLeft <= 0 || currentView !== 'quiz') return;
+    
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          triggerTimeoutFinish();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft, isFinished, isConfiguring]);
 
-  const startQuizSession = () => {
+    return () => clearInterval(timer);
+  }, [isTimerActive, timeLeft, currentView]);
+
+  // Fungsi jika waktu habis di tengah jalan
+  const triggerTimeoutFinish = () => {
+    setIsTimerActive(false);
+    calculateAndSaveResults(null, null);
+  };
+
+  // Fungsi untuk Inisialisasi Kuis dari Dashboard
+  const startExam = (category: 'All' | 'Logic' | 'Programming') => {
+    setSelectedCategory(category);
+    
     let filtered = [...mockQuizQuestions];
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(q => q.category === selectedCategory);
+    if (category !== 'All') {
+      filtered = filtered.filter(q => q.category === category);
     }
     const scrambled = filtered.sort(() => Math.random() - 0.5);
     
@@ -48,8 +79,8 @@ export default function Home() {
     setUserAnswers({});
     setSelectedIndicesTracker({});
     setTimeLeft(7200);
-    setIsFinished(false);
-    setIsConfiguring(false);
+    setIsTimerActive(true);
+    setCurrentView('quiz');
   };
 
   const handleNextQuestionWithIndex = (isCorrect: boolean, chosenOptionIndex: number | null) => {
@@ -59,7 +90,7 @@ export default function Home() {
     if (currentIndex < shuffledQuestions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      finishQuiz(isCorrect, chosenOptionIndex);
+      calculateAndSaveResults(isCorrect, chosenOptionIndex);
     }
   };
 
@@ -70,28 +101,45 @@ export default function Home() {
     if (currentIndex < shuffledQuestions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      finishQuiz(null, null);
+      calculateAndSaveResults(null, null);
     }
   };
 
-  const finishQuiz = (lastAnswerStatus: boolean | null, lastChosenIndex: number | null) => {
-    setIsFinished(true);
-    
-    let correct = 0;
-    let wrong = 0;
+  // Kalkulasi & Sinkronisasi Data Akhir ke Dashboard Lokal
+  const calculateAndSaveResults = (lastAnswerStatus: boolean | null, lastChosenIndex: number | null) => {
+    setIsTimerActive(false);
+    setCurrentView('review');
+
+    let sessionCorrect = 0;
+    let sessionWrong = 0;
+
     shuffledQuestions.forEach((_, index) => {
       let ans = userAnswers[index];
       if (index === currentIndex) ans = lastAnswerStatus;
-      if (ans === true) correct++;
-      else if (ans === false) wrong++;
+      if (ans === true) sessionCorrect++;
+      else if (ans === false) sessionWrong++;
     });
 
-    const sessionScore = (correct * 4) + (wrong * -1);
-    const addedXp = sessionScore > 0 ? sessionScore : 0; 
-    
+    const sessionScore = (sessionCorrect * 4) + (sessionWrong * -1);
+    const addedXp = sessionScore > 0 ? sessionScore : 0;
+
+    // Hitung akumulasi metrik seumur hidup baru
     const newTotalXp = totalXp + addedXp;
+    const newTestsTaken = testsTaken + 1;
+    const newLifetimeCorrect = lifetimeCorrect + sessionCorrect;
+    const newLifetimeWrong = lifetimeWrong + sessionWrong;
+
+    // Update States
     setTotalXp(newTotalXp);
+    setTestsTaken(newTestsTaken);
+    setLifetimeCorrect(newLifetimeCorrect);
+    setLifetimeWrong(newLifetimeWrong);
+
+    // Save ke localStorage
     localStorage.setItem('apple_academy_xp', newTotalXp.toString());
+    localStorage.setItem('apple_academy_tests', newTestsTaken.toString());
+    localStorage.setItem('apple_academy_correct', newLifetimeCorrect.toString());
+    localStorage.setItem('apple_academy_wrong', newLifetimeWrong.toString());
 
     import('canvas-confetti').then((cf) => {
       cf.default({ particleCount: 150, spread: 80 });
@@ -115,11 +163,12 @@ export default function Home() {
     return { correct, wrong, skipped, totalScore, maxPossibleScore };
   };
 
+  // LEVEL SYSTEM LOGIC
   const getRankInfo = (xp: number) => {
-    if (xp < 30) return { level: 1, title: 'Novice Thinker 🥚', desc: 'Start training your brain with logical reasoning and computational patterns.' };
-    if (xp < 80) return { level: 2, title: 'Logic Learner 🐣', desc: 'Nice! You are getting better at identifying traps in code snippets and number series.' };
-    if (xp < 150) return { level: 3, title: 'Problem Solver 🐥', desc: 'Great job! Your left and right brain hemispheres are working in perfect sync.' };
-    return { level: 4, title: 'Code Alchemist 🦅', desc: 'Elite Rank! Your logical absolute speed is ready to crush the Academy test.' };
+    if (xp < 30) return { level: 1, title: 'Novice Thinker 🥚', desc: 'Keep practicing to develop muscle memory for logic puzzles.', nextMilestone: 30 };
+    if (xp < 80) return { level: 2, title: 'Logic Learner 🐣', desc: 'Good progress! You are beginning to spot syntax traps and pattern jumps.', nextMilestone: 80 };
+    if (xp < 150) return { level: 3, title: 'Problem Solver 🐥', desc: 'Impressive! Your structural analytical thinking is very well balanced.', nextMilestone: 150 };
+    return { level: 4, title: 'Code Alchemist 🦅', desc: 'Master Rank! Your processing speed is highly ready for the Academy test.', nextMilestone: 500 };
   };
 
   const formatTime = (seconds: number) => {
@@ -133,117 +182,188 @@ export default function Home() {
   const stats = calculateFinalStats();
   const currentQuestion = shuffledQuestions[currentIndex];
 
+  // Hitung persentase akurasi global seumur hidup
+  const totalLifetimeAnswers = lifetimeCorrect + lifetimeWrong;
+  const globalAccuracy = totalLifetimeAnswers > 0 ? ((lifetimeCorrect / totalLifetimeAnswers) * 100).toFixed(1) : '0.0';
+
   return (
-    <main className="min-h-screen bg-slate-100 flex flex-col items-center p-6">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 sm:p-8 flex flex-col items-center">
       
-      {/* LEVEL HEADER */}
-      <div className="w-full max-w-4xl bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-5 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-        <div>
-          <span className="bg-indigo-500/30 text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
-            Level {currentRank.level} — {currentRank.title}
-          </span>
-          <p className="text-xs text-slate-300 mt-1 max-w-md">{currentRank.desc}</p>
-        </div>
-        <div className="text-right">
-          <span className="text-xs text-slate-400 block font-medium">Total Accumulated XP:</span>
-          <span className="text-2xl font-black text-amber-400">{totalXp} <span className="text-sm font-normal text-slate-300">XP</span></span>
-        </div>
-      </div>
-
-      {/* SCREEN 1: CONFIGURATION */}
-      {isConfiguring ? (
-        <div className="w-full max-w-2xl bg-white shadow-xl rounded-2xl p-8 border border-slate-200 mt-4">
-          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">🛠️ Configure Your Practice Session</h2>
-          <p className="text-sm text-slate-500 mb-6">Customize your topics and correction system to match your training needs.</p>
-
-          <div className="mb-6">
-            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">🎯 Select Topic</label>
-            <div className="grid grid-cols-3 gap-3">
-              {(['All', 'Logic', 'Programming'] as const).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`p-4 rounded-xl border-2 font-semibold text-sm transition-all ${
-                    selectedCategory === cat ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                  }`}
-                >
-                  {cat === 'All' ? '📚 Mixed Session' : cat === 'Logic' ? '🧠 Logic' : '💻 Code'}
-                </button>
-              ))}
+      {/* VIEW 1: MAIN LEARNING DASHBOARD */}
+      {currentView === 'dashboard' && (
+        <div className="w-full max-w-4xl space-y-8 animate-fade-in">
+          
+          {/* WELCOME CARD */}
+          <div className="w-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-800">
+            <div className="space-y-2">
+              <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
+                Level {currentRank.level} — {currentRank.title}
+              </span>
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Welcome Back, Cadet! 👋</h1>
+              <p className="text-slate-400 text-sm max-w-lg leading-relaxed">{currentRank.desc}</p>
+              
+              {/* Progress Bar to Next Level */}
+              <div className="pt-2 w-full max-w-xs">
+                <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                  <span>Progress to Next Rank</span>
+                  <span>{totalXp} / {currentRank.nextMilestone} XP</span>
+                </div>
+                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-amber-400 to-amber-500 h-full" style={{ width: `${Math.min((totalXp / currentRank.nextMilestone) * 100, 100)}%` }} />
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center min-w-[140px] shadow-inner backdrop-blur-sm">
+              <span className="text-xs text-indigo-200 block font-bold uppercase tracking-wider mb-1">Total Power</span>
+              <span className="text-4xl font-black text-amber-400 tracking-tight">{totalXp}</span>
+              <span className="text-xs text-slate-400 block font-medium mt-0.5">XP Points</span>
             </div>
           </div>
 
-          <div className="mb-8">
-            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">⏱️ Correction Mode</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setReviewMode('instan')}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${reviewMode === 'instan' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
-              >
-                <span className="block font-bold text-sm">⚡ Instant Feedback</span>
-                <span className="block text-xs mt-1 text-slate-500 opacity-80">Answers and explanations open instantly after each question.</span>
-              </button>
-              <button
-                onClick={() => setReviewMode('akhir')}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${reviewMode === 'akhir' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
-              >
-                <span className="block font-bold text-sm">📝 End Review</span>
-                <span className="block text-xs mt-1 text-slate-500 opacity-80">Real exam simulator. Correct answers are hidden until you finish the test.</span>
-              </button>
+          {/* GLOBAL PERFORMANCE STATISTICS GRAPH ROW */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl text-xl">📝</div>
+              <div>
+                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Total Drills</span>
+                <span className="text-2xl font-black text-slate-800">{testsTaken} <span className="text-xs font-medium text-slate-400">sessions</span></span>
+              </div>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl text-xl">🎯</div>
+              <div>
+                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Global Accuracy</span>
+                <span className="text-2xl font-black text-slate-800">{globalAccuracy}%</span>
+              </div>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-amber-50 text-amber-500 rounded-xl text-xl">🔥</div>
+              <div>
+                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Correct Answers</span>
+                <span className="text-2xl font-black text-slate-800">{lifetimeCorrect} <span className="text-xs font-medium text-slate-400">items</span></span>
+              </div>
             </div>
           </div>
 
-          <button onClick={startQuizSession} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all">
-            Start Practice Session Now 🔥
-          </button>
-        </div>
-      ) : !isFinished ? (
-        
-        /* SCREEN 2: LIVE QUIZ PLAYING */
-        <div className="w-full flex flex-col items-center">
-          <div className="w-full max-w-4xl bg-white shadow-sm border border-slate-200 rounded-2xl p-4 flex justify-between items-center gap-4 mb-4">
+          {/* SETTINGS PRE-EXAM QUICK TOGGLE */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase">Topic: {selectedCategory === 'All' ? 'Mixed' : selectedCategory}</p>
+              <h3 className="text-sm font-bold text-slate-800">Global Correction Mode Settings:</h3>
+              <p className="text-xs text-slate-400 font-medium">This choice determines how answer keys display while running any session below.</p>
+            </div>
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
+              <button 
+                onClick={() => setReviewMode('instan')}
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${reviewMode === 'instan' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                ⚡ Instant Feedback
+              </button>
+              <button 
+                onClick={() => setReviewMode('akhir')}
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${reviewMode === 'akhir' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                📝 AssessmentDay Style
+              </button>
+            </div>
+          </div>
+
+          {/* SYLLABUS CORE STUDY CARDS SECTION */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 Select Your Study Track</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* TRACK 1: MIXED TOPICS */}
+              <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📚</div>
+                  <h3 className="text-lg font-bold text-slate-800">Mixed Drill Session</h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">The ultimate simulator containing a cross-shuffled mix of abstract patterns, logical syllogisms, and Swift code snippets.</p>
+                </div>
+                <button onClick={() => startExam('All')} className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-indigo-50">
+                  Launch Mixed Test →
+                </button>
+              </div>
+
+              {/* TRACK 2: LOGIC & REASONING ONLY */}
+              <div className="bg-white border-2 border-amber-200 bg-amber-50/20 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🧠</div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-800">Logic & Reasoning</h3>
+                    <span className="bg-amber-100 text-amber-700 text-[10px] font-extrabold px-1.5 py-0.5 rounded">High Priority</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">Focus purely on numerical series, abstract visual matrices, cryptography rules, and seating arrangement logic puzzles.</p>
+                </div>
+                <button onClick={() => startExam('Logic')} className="w-full mt-6 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-amber-50">
+                  Practice Logic Drills →
+                </button>
+              </div>
+
+              {/* TRACK 3: PROGRAMMING BASIC ONLY */}
+              <div className="bg-white border-2 border-blue-200 bg-blue-50/20 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💻</div>
+                  <h3 className="text-lg font-bold text-slate-800">Swift & Tech Concepts</h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">Sharpen your computational thinking. Practice method overriding, for-while loop variables tracking, and basic core OOP terminology.</p>
+                </div>
+                <button onClick={() => startExam('Programming')} className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-blue-50">
+                  Compile Code Drills →
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 2: LIVE QUIZ LAYING INTERFACE */}
+      {currentView === 'quiz' && (
+        <div className="w-full max-w-2xl flex flex-col items-center animate-fade-in">
+          <div className="w-full bg-white shadow-sm border border-slate-200 rounded-2xl p-4 flex justify-between items-center gap-4 mb-4">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase">Track: {selectedCategory === 'All' ? 'Mixed' : selectedCategory}</p>
               <p className="text-xs font-medium text-slate-500">Mode: {reviewMode === 'instan' ? 'Instant Correction' : 'AssessmentDay Simulator'}</p>
             </div>
-            <div className="bg-slate-900 border border-slate-900 text-emerald-400 px-4 py-2 rounded-xl font-mono font-bold">⏱️ {formatTime(timeLeft)}</div>
+            <div className="bg-slate-900 text-emerald-400 px-4 py-2 rounded-xl font-mono font-bold tracking-wider">
+              ⏱️ {formatTime(timeLeft)}
+            </div>
           </div>
 
-          <div className="w-full max-w-2xl bg-slate-200 h-2 rounded-full overflow-hidden mb-4 shadow-inner">
+          <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-4 shadow-inner">
             <div className="bg-indigo-600 h-full transition-all duration-300" style={{ width: `${(currentIndex / shuffledQuestions.length) * 100}%` }} />
           </div>
 
-          <div className="w-full max-w-2xl flex justify-between items-center px-1 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+          <div className="w-full flex justify-between items-center px-1 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
             <span>Question {currentIndex + 1} of {shuffledQuestions.length}</span>
             <span className="text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-md">Sub: {currentQuestion.subCategory}</span>
           </div>
 
-          <div className="w-full flex flex-col items-center">
-            <FlashcardComponent
-              key={currentQuestion.id + "-fixed"}
-              question={currentQuestion.question}
-              codeSnippet={currentQuestion.codeSnippet}
-              options={currentQuestion.options}
-              correctAnswerIndex={currentQuestion.correctAnswerIndex}
-              explanation={currentQuestion.explanation}
-              category={currentQuestion.category}
-              reviewMode={reviewMode}
-              onNext={() => {}}
-              onNextWithIndex={(isCorrect, chosenIdx) => handleNextQuestionWithIndex(isCorrect, chosenIdx)}
-            />
-          </div>
+          <FlashcardComponent
+            key={currentQuestion.id + "-dashboard-active"}
+            question={currentQuestion.question}
+            codeSnippet={currentQuestion.codeSnippet}
+            options={currentQuestion.options}
+            correctAnswerIndex={currentQuestion.correctAnswerIndex}
+            explanation={currentQuestion.explanation}
+            category={currentQuestion.category}
+            reviewMode={reviewMode}
+            onNext={() => {}}
+            onNextWithIndex={(isCorrect, chosenIdx) => handleNextQuestionWithIndex(isCorrect, chosenIdx)}
+          />
 
-          <button onClick={handleSkipQuestion} className="mt-2 text-sm font-semibold text-slate-500 hover:text-slate-800 underline transition-all">
-            Skip Question (0 Points, Avoid Negative Marking)
+          <button onClick={handleSkipQuestion} className="mt-2 text-sm font-semibold text-slate-400 hover:text-slate-700 underline transition-all">
+            Skip This Question (0 Pts, Avoid Penalty)
           </button>
         </div>
-      ) : (
-        
-        /* SCREEN 3: ASSESSMENTDAY STYLE REVIEW PAGE */
-        <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-slate-200 flex flex-col items-center">
-          <span className="text-5xl mb-2">📊</span>
+      )}
+
+      {/* VIEW 3: FULL REPORT REVIEW SHEET (ALA ASSESSMENTDAY) */}
+      {currentView === 'review' && (
+        <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-slate-200 animate-fade-in flex flex-col items-center">
+          <span className="text-5xl mb-2">🏅</span>
           <h2 className="text-3xl font-black text-slate-900">Performance Review Sheet</h2>
-          <p className="text-sm text-slate-500 mt-1 mb-6 text-center">Analyze your answers below to discover mistakes and master structural logic traps.</p>
+          <p className="text-sm text-slate-500 mt-1 mb-6 text-center">Analyze your answers item by item to discover mistakes and master structural logic traps.</p>
 
           <div className="w-full grid grid-cols-4 gap-3 mb-8 text-center">
             <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
@@ -259,7 +379,7 @@ export default function Home() {
               <span className="text-2xl font-black text-slate-700">{stats.skipped}</span>
             </div>
             <div className="bg-indigo-600 text-white p-4 rounded-xl shadow-md">
-              <span className="block text-xs font-bold text-indigo-200 uppercase">Final Score</span>
+              <span className="block text-xs font-bold text-indigo-200 uppercase">Session Score</span>
               <span className="text-2xl font-black text-white">{stats.totalScore}</span>
             </div>
           </div>
@@ -326,11 +446,12 @@ export default function Home() {
             })}
           </div>
 
-          <button onClick={() => setIsConfiguring(true)} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-md mt-8">
-            Setup New Exam Session 🔄
+          <button onClick={() => setCurrentView('dashboard')} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-md mt-8">
+            Back to Learning Dashboard 🏠
           </button>
         </div>
       )}
+
     </main>
   );
 }

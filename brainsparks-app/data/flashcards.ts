@@ -147,5 +147,72 @@ print(colors[1])`,
     options: ['Overloading', 'Overriding', 'Encapsulation', 'Abstraction'],
     correctAnswerIndex: 1,
     explanation: 'Replacing or rewriting a method belonging to a superclass inside a subclass is known as Method Overriding (declared with the "override" keyword in Swift).'
+  },
+  // --- ADDITIONAL LOGIC & REASONING ---
+  {
+    id: 'l7',
+    category: 'Logic',
+    subCategory: 'Deductive Reasoning',
+    question: 'If "All cats have tails" is true, and "Some creatures with tails are not cats" is true, which of the following is logically guaranteed?',
+    options: [
+      'No non-cats have tails.',
+      'Some creatures are not cats.',
+      'All creatures with tails are cats.',
+      'All cats are creatures.'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'The premise "Some creatures with tails are not cats" explicitly confirms the existence of creatures that are not cats, thus satisfying the option.'
+  },
+  {
+    id: 'l8',
+    category: 'Logic',
+    subCategory: 'Sequence Pattern',
+    question: 'What comes next in this sequence: 1, 1, 2, 3, 5, 8, 13, ?',
+    options: ['15', '20', '21', '24'],
+    correctAnswerIndex: 2,
+    explanation: 'This is the Fibonacci sequence, where each number is the sum of the two preceding ones. 8 + 13 = 21.'
+  },
+
+  // --- ADDITIONAL PROGRAMMING & TECH CONCEPTS ---
+  {
+    id: 'p4',
+    category: 'Programming',
+    subCategory: 'Bitwise Operators',
+    question: 'What is the decimal result of the bitwise operation (5 << 1)?',
+    codeSnippet: `// 5 in binary is 0101
+// Applying a left shift by 1 position (<< 1)
+print(5 << 1)`,
+    options: ['5', '8', '10', '12'],
+    correctAnswerIndex: 2,
+    explanation: 'Left shifting 0101 by 1 position results in 1010, which is 10 in decimal (equivalent to multiplying by 2^1).'
+  },
+  {
+    id: 'p5',
+    category: 'Programming',
+    subCategory: 'Asynchronous Programming',
+    question: 'In modern Swift concurrency, what does the "await" keyword effectively do?',
+    options: [
+      'It stops the entire application until the task finishes.',
+      'It suspends the current function, allowing the thread to do other work until the awaited task completes.',
+      'It forces the code to run on a background thread automatically.',
+      'It ignores any errors that might occur during the function call.'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'The "await" keyword indicates a suspension point where the function yields control back to the system, allowing the thread to remain productive while waiting for the asynchronous operation.'
+  },
+  {
+    id: 'p6',
+    category: 'Programming',
+    subCategory: 'Data Structures',
+    question: 'Which of the following is a characteristic of a "Stack" data structure?',
+    options: [
+      'FIFO (First In, First Out)',
+      'LIFO (Last In, First Out)',
+      'Random access to all elements at O(1) time',
+      'It does not allow duplicate values'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'A stack follows the LIFO (Last In, First Out) principle, where the last element added is the first one to be removed.'
   }
+
 ];

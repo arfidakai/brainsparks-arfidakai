@@ -6,9 +6,6 @@ import { FlashcardComponent } from '../components/Flashcard';
 
 export default function Home() {
   // NAVIGATION & VIEW STATES
-  // 'dashboard' = Halaman Utama Pembelajaran
-  // 'quiz' = Sesi Kuis Berjalan
-  // 'review' = Halaman Laporan Penjelasan Akhir
   const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review'>('dashboard');
   
   // CONFIGURATION STATES
@@ -29,14 +26,42 @@ export default function Home() {
   const [testsTaken, setTestsTaken] = useState<number>(0);
   const [lifetimeCorrect, setLifetimeCorrect] = useState<number>(0);
   const [lifetimeWrong, setLifetimeWrong] = useState<number>(0);
+  
+  // STREAK STATES
+  const [streakCount, setStreakCount] = useState<number>(0);
 
-  // Load lifetime metrics dari localStorage saat pertama kali dibuka
+  // Load lifetime metrics & check streak status dari localStorage saat pertama kali dibuka
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setTotalXp(parseInt(localStorage.getItem('apple_academy_xp') || '0', 10));
       setTestsTaken(parseInt(localStorage.getItem('apple_academy_tests') || '0', 10));
       setLifetimeCorrect(parseInt(localStorage.getItem('apple_academy_correct') || '0', 10));
       setLifetimeWrong(parseInt(localStorage.getItem('apple_academy_wrong') || '0', 10));
+      
+      // Ambil data streak
+      const savedStreak = parseInt(localStorage.getItem('apple_academy_streak') || '0', 10);
+      const lastActiveDateStr = localStorage.getItem('apple_academy_last_active_date');
+      
+      if (lastActiveDateStr && savedStreak > 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const lastDate = new Date(lastActiveDateStr);
+        lastDate.setHours(0, 0, 0, 0);
+        
+        const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 1) {
+          // Jika bolong lebih dari 1 hari, streak hangus kembali ke 0
+          setStreakCount(0);
+          localStorage.setItem('apple_academy_streak', '0');
+        } else {
+          setStreakCount(savedStreak);
+        }
+      } else {
+        setStreakCount(savedStreak);
+      }
     }
   }, []);
 
@@ -129,17 +154,47 @@ export default function Home() {
     const newLifetimeCorrect = lifetimeCorrect + sessionCorrect;
     const newLifetimeWrong = lifetimeWrong + sessionWrong;
 
+    // LOGIKA PENYIMPANAN STREAK BARU
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const lastActiveDateStr = localStorage.getItem('apple_academy_last_active_date');
+    let newStreak = streakCount;
+
+    if (!lastActiveDateStr) {
+      // Latihan pertama kali seumur hidup
+      newStreak = 1;
+    } else {
+      const lastDate = new Date(lastActiveDateStr);
+      lastDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Tepat keesokan harinya -> Streak naik!
+        newStreak = streakCount + 1;
+      } else if (diffDays > 1) {
+        // Sudah bolong -> Reset mulai dari 1 lagi
+        newStreak = 1;
+      }
+      // Jika diffDays === 0 (latihan lagi di hari yang sama), streak tidak berubah
+    }
+
     // Update States
     setTotalXp(newTotalXp);
     setTestsTaken(newTestsTaken);
     setLifetimeCorrect(newLifetimeCorrect);
     setLifetimeWrong(newLifetimeWrong);
+    setStreakCount(newStreak);
 
     // Save ke localStorage
     localStorage.setItem('apple_academy_xp', newTotalXp.toString());
     localStorage.setItem('apple_academy_tests', newTestsTaken.toString());
     localStorage.setItem('apple_academy_correct', newLifetimeCorrect.toString());
     localStorage.setItem('apple_academy_wrong', newLifetimeWrong.toString());
+    localStorage.setItem('apple_academy_streak', newStreak.toString());
+    localStorage.setItem('apple_academy_last_active_date', today.toISOString());
 
     import('canvas-confetti').then((cf) => {
       cf.default({ particleCount: 150, spread: 80 });
@@ -195,11 +250,23 @@ export default function Home() {
           
           {/* WELCOME CARD */}
           <div className="w-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-800">
-            <div className="space-y-2">
-              <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
-                Level {currentRank.level} — {currentRank.title}
-              </span>
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Welcome Back, Cadet! 👋</h1>
+            <div className="space-y-2 w-full md:w-auto">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
+                  Level {currentRank.level} — {currentRank.title}
+                </span>
+                
+                {/* STREAK BADGE CHIP */}
+                <span className={`text-xs font-extrabold px-3 py-1 rounded-full border flex items-center gap-1 shadow-sm ${
+                  streakCount > 0 
+                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse' 
+                    : 'bg-slate-800 text-slate-400 border-slate-700/60'
+                }`}>
+                  🔥 {streakCount} Day Streak
+                </span>
+              </div>
+              
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl pt-1">Welcome Back, Cadet! 👋</h1>
               <p className="text-slate-400 text-sm max-w-lg leading-relaxed">{currentRank.desc}</p>
               
               {/* Progress Bar to Next Level */}
@@ -214,17 +281,19 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center min-w-[140px] shadow-inner backdrop-blur-sm">
-              <span className="text-xs text-indigo-200 block font-bold uppercase tracking-wider mb-1">Total Power</span>
-              <span className="text-4xl font-black text-amber-400 tracking-tight">{totalXp}</span>
-              <span className="text-xs text-slate-400 block font-medium mt-0.5">XP Points</span>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center min-w-[140px] shadow-inner backdrop-blur-sm self-stretch md:self-auto flex md:flex-col justify-center items-center gap-2 md:gap-0">
+              <div>
+                <span className="text-xs text-indigo-200 block font-bold uppercase tracking-wider mb-1">Total Power</span>
+                <span className="text-4xl font-black text-amber-400 tracking-tight">{totalXp}</span>
+                <span className="text-xs text-slate-400 block font-medium mt-0.5">XP Points</span>
+              </div>
             </div>
           </div>
 
           {/* GLOBAL PERFORMANCE STATISTICS GRAPH ROW */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl text-xl">📝</div>
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl text-xl">...</div>
               <div>
                 <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Total Drills</span>
                 <span className="text-2xl font-black text-slate-800">{testsTaken} <span className="text-xs font-medium text-slate-400">sessions</span></span>

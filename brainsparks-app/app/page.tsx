@@ -5,14 +5,11 @@ import { mockQuizQuestions, QuizQuestion } from '../data/flashcards';
 import { FlashcardComponent } from '../components/Flashcard';
 
 export default function Home() {
-  // NAVIGATION & VIEW STATES
   const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review'>('dashboard');
   
-  // CONFIGURATION STATES
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Logic' | 'Programming'>('All');
   const [reviewMode, setReviewMode] = useState<'instan' | 'akhir'>('instan');
 
-  // CORE QUIZ STATES
   const [shuffledQuestions, setShuffledQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: boolean | null }>({});
@@ -21,16 +18,13 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState<number>(7200); // 120 Mins
   const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
 
-  // LIFETIME STATISTICS (Disimpan di localStorage)
   const [totalXp, setTotalXp] = useState<number>(0);
   const [testsTaken, setTestsTaken] = useState<number>(0);
   const [lifetimeCorrect, setLifetimeCorrect] = useState<number>(0);
   const [lifetimeWrong, setLifetimeWrong] = useState<number>(0);
   
-  // STREAK STATES
   const [streakCount, setStreakCount] = useState<number>(0);
 
-  // Load lifetime metrics & check streak status dari localStorage saat pertama kali dibuka
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setTotalXp(parseInt(localStorage.getItem('apple_academy_xp') || '0', 10));
@@ -38,7 +32,6 @@ export default function Home() {
       setLifetimeCorrect(parseInt(localStorage.getItem('apple_academy_correct') || '0', 10));
       setLifetimeWrong(parseInt(localStorage.getItem('apple_academy_wrong') || '0', 10));
       
-      // Ambil data streak
       const savedStreak = parseInt(localStorage.getItem('apple_academy_streak') || '0', 10);
       const lastActiveDateStr = localStorage.getItem('apple_academy_last_active_date');
       
@@ -53,7 +46,6 @@ export default function Home() {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
         if (diffDays > 1) {
-          // Jika bolong lebih dari 1 hari, streak hangus kembali ke 0
           setStreakCount(0);
           localStorage.setItem('apple_academy_streak', '0');
         } else {
@@ -64,8 +56,6 @@ export default function Home() {
       }
     }
   }, []);
-
-  // Global Timer Effect
   useEffect(() => {
     if (!isTimerActive || timeLeft <= 0 || currentView !== 'quiz') return;
     
@@ -83,13 +73,10 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [isTimerActive, timeLeft, currentView]);
 
-  // Fungsi jika waktu habis di tengah jalan
   const triggerTimeoutFinish = () => {
     setIsTimerActive(false);
     calculateAndSaveResults(null, null);
   };
-
-  // Fungsi untuk Inisialisasi Kuis dari Dashboard
   const startExam = (category: 'All' | 'Logic' | 'Programming') => {
     setSelectedCategory(category);
     
@@ -130,7 +117,6 @@ export default function Home() {
     }
   };
 
-  // Kalkulasi & Sinkronisasi Data Akhir ke Dashboard Lokal
   const calculateAndSaveResults = (lastAnswerStatus: boolean | null, lastChosenIndex: number | null) => {
     setIsTimerActive(false);
     setCurrentView('review');
@@ -148,13 +134,11 @@ export default function Home() {
     const sessionScore = (sessionCorrect * 4) + (sessionWrong * -1);
     const addedXp = sessionScore > 0 ? sessionScore : 0;
 
-    // Hitung akumulasi metrik seumur hidup baru
     const newTotalXp = totalXp + addedXp;
     const newTestsTaken = testsTaken + 1;
     const newLifetimeCorrect = lifetimeCorrect + sessionCorrect;
     const newLifetimeWrong = lifetimeWrong + sessionWrong;
 
-    // LOGIKA PENYIMPANAN STREAK BARU
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -162,7 +146,6 @@ export default function Home() {
     let newStreak = streakCount;
 
     if (!lastActiveDateStr) {
-      // Latihan pertama kali seumur hidup
       newStreak = 1;
     } else {
       const lastDate = new Date(lastActiveDateStr);
@@ -172,23 +155,18 @@ export default function Home() {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays === 1) {
-        // Tepat keesokan harinya -> Streak naik!
         newStreak = streakCount + 1;
       } else if (diffDays > 1) {
-        // Sudah bolong -> Reset mulai dari 1 lagi
         newStreak = 1;
       }
-      // Jika diffDays === 0 (latihan lagi di hari yang sama), streak tidak berubah
     }
 
-    // Update States
     setTotalXp(newTotalXp);
     setTestsTaken(newTestsTaken);
     setLifetimeCorrect(newLifetimeCorrect);
     setLifetimeWrong(newLifetimeWrong);
     setStreakCount(newStreak);
 
-    // Save ke localStorage
     localStorage.setItem('apple_academy_xp', newTotalXp.toString());
     localStorage.setItem('apple_academy_tests', newTestsTaken.toString());
     localStorage.setItem('apple_academy_correct', newLifetimeCorrect.toString());

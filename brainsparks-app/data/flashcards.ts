@@ -4,15 +4,14 @@ export interface QuizQuestion {
   subCategory: string;
   question: string;
   codeSnippet?: string;
-  isVisual?: boolean; // Penanda jika soal menggunakan format visual grid
-  visualLayout?: string[]; // Menyimpan baris elemen visual
+  isVisual?: boolean; 
+  visualLayout?: string[];
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
 }
 
 export const mockQuizQuestions: QuizQuestion[] = [
-  // --- VISUAL LOGIC PATTERNS (NEW!) ---
   {
     id: 'v1',
     category: 'Logic',

@@ -173,45 +173,45 @@ print(colors[1])`,
   },
 
   // --- ADDITIONAL PROGRAMMING & TECH CONCEPTS ---
-//   {
-//     id: 'p4',
-//     category: 'Programming',
-//     subCategory: 'Bitwise Operators',
-//     question: 'What is the decimal result of the bitwise operation (5 << 1)?',
-//     codeSnippet: `// 5 in binary is 0101
-// // Applying a left shift by 1 position (<< 1)
-// print(5 << 1)`,
-//     options: ['5', '8', '10', '12'],
-//     correctAnswerIndex: 2,
-//     explanation: 'Left shifting 0101 by 1 position results in 1010, which is 10 in decimal (equivalent to multiplying by 2^1).'
-//   },
-//   {
-//     id: 'p5',
-//     category: 'Programming',
-//     subCategory: 'Asynchronous Programming',
-//     question: 'In modern Swift concurrency, what does the "await" keyword effectively do?',
-//     options: [
-//       'It stops the entire application until the task finishes.',
-//       'It suspends the current function, allowing the thread to do other work until the awaited task completes.',
-//       'It forces the code to run on a background thread automatically.',
-//       'It ignores any errors that might occur during the function call.'
-//     ],
-//     correctAnswerIndex: 1,
-//     explanation: 'The "await" keyword indicates a suspension point where the function yields control back to the system, allowing the thread to remain productive while waiting for the asynchronous operation.'
-//   },
-//   {
-//     id: 'p6',
-//     category: 'Programming',
-//     subCategory: 'Data Structures',
-//     question: 'Which of the following is a characteristic of a "Stack" data structure?',
-//     options: [
-//       'FIFO (First In, First Out)',
-//       'LIFO (Last In, First Out)',
-//       'Random access to all elements at O(1) time',
-//       'It does not allow duplicate values'
-//     ],
-//     correctAnswerIndex: 1,
-//     explanation: 'A stack follows the LIFO (Last In, First Out) principle, where the last element added is the first one to be removed.'
-//   }
+  {
+    id: 'p4',
+    category: 'Programming',
+    subCategory: 'Bitwise Operators',
+    question: 'What is the decimal result of the bitwise operation (5 << 1)?',
+    codeSnippet: `// 5 in binary is 0101
+// Applying a left shift by 1 position (<< 1)
+print(5 << 1)`,
+    options: ['5', '8', '10', '12'],
+    correctAnswerIndex: 2,
+    explanation: 'Left shifting 0101 by 1 position results in 1010, which is 10 in decimal (equivalent to multiplying by 2^1).'
+  },
+  {
+    id: 'p5',
+    category: 'Programming',
+    subCategory: 'Asynchronous Programming',
+    question: 'In modern Swift concurrency, what does the "await" keyword effectively do?',
+    options: [
+      'It stops the entire application until the task finishes.',
+      'It suspends the current function, allowing the thread to do other work until the awaited task completes.',
+      'It forces the code to run on a background thread automatically.',
+      'It ignores any errors that might occur during the function call.'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'The "await" keyword indicates a suspension point where the function yields control back to the system, allowing the thread to remain productive while waiting for the asynchronous operation.'
+  },
+  {
+    id: 'p6',
+    category: 'Programming',
+    subCategory: 'Data Structures',
+    question: 'Which of the following is a characteristic of a "Stack" data structure?',
+    options: [
+      'FIFO (First In, First Out)',
+      'LIFO (Last In, First Out)',
+      'Random access to all elements at O(1) time',
+      'It does not allow duplicate values'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'A stack follows the LIFO (Last In, First Out) principle, where the last element added is the first one to be removed.'
+  }
 
 ];

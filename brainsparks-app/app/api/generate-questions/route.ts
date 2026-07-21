@@ -53,8 +53,11 @@ export async function POST(request: NextRequest) {
   const category: "All" | "Logic" | "Programming" = body.category ?? "All";
   const rank: number = Math.min(Math.max(body.rank ?? 1, 1), 4);
   const recentAccuracy: number = body.recentAccuracy ?? 0;
+  const weakSubCategories: string[] = Array.isArray(body.weakSubCategories)
+    ? body.weakSubCategories.slice(0, 5)
+    : [];
   const recentSubCategories: string[] = Array.isArray(body.recentSubCategories)
-    ? body.recentSubCategories.slice(-20)
+    ? body.recentSubCategories.slice(-20).filter((sc: string) => !weakSubCategories.includes(sc))
     : [];
   const count = 10;
 
@@ -76,6 +79,13 @@ export async function POST(request: NextRequest) {
       ? `Avoid repeating these recently-used sub-topics: ${recentSubCategories.join(", ")}.`
       : "";
 
+  const weakTopicInstruction =
+    weakSubCategories.length > 0
+      ? `The user has been struggling with these sub-topics (below 60% accuracy): ${weakSubCategories.join(", ")}. ` +
+        `Dedicate roughly half of the ${count} questions to fresh, differently-worded questions on these specific sub-topics ` +
+        `(it's fine that they repeat recent sessions — the user needs more reps here), and fill the rest with other sub-topics.`
+      : "";
+
   const systemInstruction =
     "You write multiple-choice practice questions for candidates preparing for the Apple Developer Academy screening test. " +
     "Questions cover two categories: 'Logic' (number series, syllogisms, spatial/abstract reasoning, seating puzzles) and " +
@@ -90,6 +100,7 @@ export async function POST(request: NextRequest) {
     (accuracyNudge ? `${accuracyNudge}\n` : "") +
     `${categoryInstruction}\n` +
     (avoidInstruction ? `${avoidInstruction}\n` : "") +
+    (weakTopicInstruction ? `${weakTopicInstruction}\n` : "") +
     `Each subCategory should be a short label like "Number Series" or "Optionals & Unwrapping".`;
 
   try {

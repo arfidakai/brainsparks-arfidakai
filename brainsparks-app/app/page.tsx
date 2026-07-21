@@ -87,6 +87,33 @@ export default function Home() {
     return 4;
   };
 
+  type SubCategoryStats = Record<string, { correct: number; wrong: number }>;
+
+  const readSubCategoryStats = (): SubCategoryStats => {
+    if (typeof window === 'undefined') return {};
+    const raw = localStorage.getItem('apple_academy_subcategory_stats');
+    return raw ? JSON.parse(raw) : {};
+  };
+
+  const recordSubCategoryResult = (subCategory: string, isCorrect: boolean) => {
+    if (typeof window === 'undefined') return;
+    const stats = readSubCategoryStats();
+    const entry = stats[subCategory] || { correct: 0, wrong: 0 };
+    if (isCorrect) entry.correct += 1;
+    else entry.wrong += 1;
+    stats[subCategory] = entry;
+    localStorage.setItem('apple_academy_subcategory_stats', JSON.stringify(stats));
+  };
+
+  const getWeakSubCategories = (): string[] => {
+    const stats = readSubCategoryStats();
+    return Object.entries(stats)
+      .filter(([, s]) => s.correct + s.wrong >= 2 && s.correct / (s.correct + s.wrong) < 0.6)
+      .sort((a, b) => a[1].correct / (a[1].correct + a[1].wrong) - b[1].correct / (b[1].correct + b[1].wrong))
+      .slice(0, 5)
+      .map(([subCategory]) => subCategory);
+  };
+
   const getFallbackQuestions = (category: 'All' | 'Logic' | 'Programming') => {
     let filtered = [...mockQuizQuestions];
     if (category !== 'All') {
@@ -122,6 +149,7 @@ export default function Home() {
     const recentSubCategories: string[] = typeof window !== 'undefined'
       ? JSON.parse(localStorage.getItem('apple_academy_recent_subcategories') || '[]')
       : [];
+    const weakSubCategories = getWeakSubCategories();
 
     try {
       const res = await fetch('/api/generate-questions', {
@@ -132,6 +160,7 @@ export default function Home() {
           rank: getRankLevel(totalXp),
           recentAccuracy,
           recentSubCategories,
+          weakSubCategories,
         }),
       });
 
@@ -154,6 +183,7 @@ export default function Home() {
   const handleNextQuestionWithIndex = (isCorrect: boolean, chosenOptionIndex: number | null) => {
     setUserAnswers((prev) => ({ ...prev, [currentIndex]: isCorrect }));
     setSelectedIndicesTracker((prev) => ({ ...prev, [currentIndex]: chosenOptionIndex }));
+    recordSubCategoryResult(shuffledQuestions[currentIndex].subCategory, isCorrect);
 
     if (currentIndex < shuffledQuestions.length - 1) {
       setCurrentIndex((prev) => prev + 1);

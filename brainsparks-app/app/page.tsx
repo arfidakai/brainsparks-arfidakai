@@ -28,13 +28,18 @@ export default function Home() {
   const [isGeneratingExam, setIsGeneratingExam] = useState<boolean>(false);
   const [generationNotice, setGenerationNotice] = useState<string | null>(null);
 
+  const [subCategoryStats, setSubCategoryStats] = useState<Record<string, { correct: number; wrong: number }>>({});
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setTotalXp(parseInt(localStorage.getItem('apple_academy_xp') || '0', 10));
       setTestsTaken(parseInt(localStorage.getItem('apple_academy_tests') || '0', 10));
       setLifetimeCorrect(parseInt(localStorage.getItem('apple_academy_correct') || '0', 10));
       setLifetimeWrong(parseInt(localStorage.getItem('apple_academy_wrong') || '0', 10));
-      
+
+      const rawSubCategoryStats = localStorage.getItem('apple_academy_subcategory_stats');
+      setSubCategoryStats(rawSubCategoryStats ? JSON.parse(rawSubCategoryStats) : {});
+
       const savedStreak = parseInt(localStorage.getItem('apple_academy_streak') || '0', 10);
       const lastActiveDateStr = localStorage.getItem('apple_academy_last_active_date');
       
@@ -103,6 +108,7 @@ export default function Home() {
     else entry.wrong += 1;
     stats[subCategory] = entry;
     localStorage.setItem('apple_academy_subcategory_stats', JSON.stringify(stats));
+    setSubCategoryStats({ ...stats });
   };
 
   const getWeakSubCategories = (): string[] => {
@@ -378,6 +384,44 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* TOPIC MASTERY BREAKDOWN */}
+          {Object.keys(subCategoryStats).length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">📊 Topic Mastery</h3>
+                <span className="text-xs text-slate-400 font-medium">Weakest topics get more AI-generated reps</span>
+              </div>
+              <div className="space-y-2.5">
+                {Object.entries(subCategoryStats)
+                  .map(([subCategory, s]) => ({
+                    subCategory,
+                    total: s.correct + s.wrong,
+                    accuracy: Math.round((s.correct / (s.correct + s.wrong)) * 100),
+                  }))
+                  .sort((a, b) => a.accuracy - b.accuracy)
+                  .slice(0, 8)
+                  .map((item) => (
+                    <div key={item.subCategory} className="flex items-center gap-3">
+                      <span className="text-xs font-semibold text-slate-600 w-36 sm:w-44 truncate" title={item.subCategory}>
+                        {item.subCategory}
+                      </span>
+                      <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            item.accuracy < 60 ? 'bg-rose-400' : item.accuracy < 85 ? 'bg-amber-400' : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${item.accuracy}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-slate-500 w-20 text-right shrink-0">
+                        {item.accuracy}% <span className="text-slate-400 font-medium">({item.total})</span>
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {/* SETTINGS PRE-EXAM QUICK TOGGLE */}
           <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">

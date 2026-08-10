@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { mockQuizQuestions, QuizQuestion } from '../data/flashcards';
 import { FlashcardComponent } from '../components/Flashcard';
+import { useI18n, LanguageSwitcher } from '../lib/i18n';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review'>('dashboard');
@@ -307,6 +308,8 @@ export default function Home() {
   const stats = calculateFinalStats();
   const currentQuestion = shuffledQuestions[currentIndex];
 
+  const { t } = useI18n();
+
   // Hitung persentase akurasi global seumur hidup
   const totalLifetimeAnswers = lifetimeCorrect + lifetimeWrong;
   const globalAccuracy = totalLifetimeAnswers > 0 ? ((lifetimeCorrect / totalLifetimeAnswers) * 100).toFixed(1) : '0.0';
@@ -320,7 +323,7 @@ export default function Home() {
           
           {/* WELCOME CARD */}
           <div className="w-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-800">
-            <div className="space-y-2 w-full md:w-auto">
+              <div className="space-y-2 w-full md:w-auto">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
                   Level {currentRank.level} — {currentRank.title}
@@ -332,17 +335,17 @@ export default function Home() {
                     ? 'bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse' 
                     : 'bg-slate-800 text-slate-400 border-slate-700/60'
                 }`}>
-                  🔥 {streakCount} Day Streak
+                  {t('streakPrefix')} {streakCount} {t('dayStreak')}
                 </span>
               </div>
               
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl pt-1">Welcome Back, Cadet! 👋</h1>
-              <p className="text-slate-400 text-sm max-w-lg leading-relaxed">{currentRank.desc}</p>
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl pt-1">{t('welcomeTitle')}</h1>
+              <p className="text-slate-400 text-sm max-w-lg leading-relaxed">{t('welcomeDesc')}</p>
               
               {/* Progress Bar to Next Level */}
               <div className="pt-2 w-full max-w-xs">
                 <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
-                  <span>Progress to Next Rank</span>
+                  <span>{t('progressToNext')}</span>
                   <span>{totalXp} / {currentRank.nextMilestone} XP</span>
                 </div>
                 <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -353,9 +356,12 @@ export default function Home() {
             
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center min-w-[140px] shadow-inner backdrop-blur-sm self-stretch md:self-auto flex md:flex-col justify-center items-center gap-2 md:gap-0">
               <div>
-                <span className="text-xs text-indigo-200 block font-bold uppercase tracking-wider mb-1">Total Power</span>
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl pt-1">{t('welcomeTitle')}</h1>
+              <div className="mt-2">
+                <LanguageSwitcher />
+              </div>
                 <span className="text-4xl font-black text-amber-400 tracking-tight">{totalXp}</span>
-                <span className="text-xs text-slate-400 block font-medium mt-0.5">XP Points</span>
+                <span className="text-xs text-slate-400 block font-medium mt-0.5">{t('xpPoints')}</span>
               </div>
             </div>
           </div>
@@ -365,22 +371,22 @@ export default function Home() {
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
               <div className="p-3 bg-blue-50 text-blue-600 rounded-xl text-xl">...</div>
               <div>
-                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Total Drills</span>
-                <span className="text-2xl font-black text-slate-800">{testsTaken} <span className="text-xs font-medium text-slate-400">sessions</span></span>
+                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">{t('totalDrills')}</span>
+                <span className="text-2xl font-black text-slate-800">{testsTaken} <span className="text-xs font-medium text-slate-400">{t('sessions')}</span></span>
               </div>
             </div>
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl text-xl">🎯</div>
               <div>
-                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Global Accuracy</span>
+                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">{t('globalAccuracy')}</span>
                 <span className="text-2xl font-black text-slate-800">{globalAccuracy}%</span>
               </div>
             </div>
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
               <div className="p-3 bg-amber-50 text-amber-500 rounded-xl text-xl">🔥</div>
               <div>
-                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Correct Answers</span>
-                <span className="text-2xl font-black text-slate-800">{lifetimeCorrect} <span className="text-xs font-medium text-slate-400">items</span></span>
+                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">{t('correctAnswers')}</span>
+                <span className="text-2xl font-black text-slate-800">{lifetimeCorrect} <span className="text-xs font-medium text-slate-400">{t('items')}</span></span>
               </div>
             </div>
           </div>
@@ -389,8 +395,8 @@ export default function Home() {
           {Object.keys(subCategoryStats).length > 0 && (
             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">📊 Topic Mastery</h3>
-                <span className="text-xs text-slate-400 font-medium">Weakest topics get more AI-generated reps</span>
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">📊 {t('topicMasteryTitle')}</h3>
+                  <span className="text-xs text-slate-400 font-medium">{t('topicMasterySubtitle')}</span>
               </div>
               <div className="space-y-2.5">
                 {Object.entries(subCategoryStats)
@@ -426,46 +432,46 @@ export default function Home() {
           {/* SETTINGS PRE-EXAM QUICK TOGGLE */}
           <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
             <div>
-              <h3 className="text-sm font-bold text-slate-800">Global Correction Mode Settings:</h3>
-              <p className="text-xs text-slate-400 font-medium">This choice determines how answer keys display while running any session below.</p>
+              <h3 className="text-sm font-bold text-slate-800">{t('settingsTitle')}</h3>
+              <p className="text-xs text-slate-400 font-medium">{t('settingsDesc')}</p>
             </div>
             <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
-              <button 
+                <button 
                 onClick={() => setReviewMode('instan')}
                 className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${reviewMode === 'instan' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
               >
-                ⚡ Instant Feedback
+                {t('instantFeedback')}
               </button>
               <button 
                 onClick={() => setReviewMode('akhir')}
                 className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${reviewMode === 'akhir' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
               >
-                📝 AssessmentDay Style
+                {t('assessmentStyle')}
               </button>
             </div>
           </div>
 
           {generationNotice && (
             <div className="w-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold rounded-xl p-3">
-              ⚠️ {generationNotice}
+              {t('generationNoticePrefix')} {generationNotice}
             </div>
           )}
 
           {/* SYLLABUS CORE STUDY CARDS SECTION */}
           <div className="space-y-4">
-            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 Select Your Study Track</h2>
-            <p className="text-xs text-slate-400 font-medium -mt-2">Questions are freshly generated by AI and get harder as your rank increases — never the same drill twice.</p>
+            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 {t('syllabusTitle')}</h2>
+            <p className="text-xs text-slate-400 font-medium -mt-2">{t('syllabusDesc')}</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* TRACK 1: MIXED TOPICS */}
               <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
                 <div className="space-y-3">
                   <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📚</div>
-                  <h3 className="text-lg font-bold text-slate-800">Mixed Drill Session</h3>
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">The ultimate simulator containing a cross-shuffled mix of abstract patterns, logical syllogisms, and Swift code snippets.</p>
+                  <h3 className="text-lg font-bold text-slate-800">{t('mixedTitle')}</h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">{t('mixedDesc')}</p>
                 </div>
                 <button onClick={() => startExam('All')} disabled={isGeneratingExam} className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-indigo-50">
-                  {isGeneratingExam ? '✨ Generating…' : 'Launch Mixed Test →'}
+                  {isGeneratingExam ? t('generating') : t('mixedButton')}
                 </button>
               </div>
 
@@ -474,13 +480,13 @@ export default function Home() {
                 <div className="space-y-3">
                   <div className="w-12 h-12 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🧠</div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-slate-800">Logic & Reasoning</h3>
+                    <h3 className="text-lg font-bold text-slate-800">{t('logicTitle')}</h3>
                     <span className="bg-amber-100 text-amber-700 text-[10px] font-extrabold px-1.5 py-0.5 rounded">High Priority</span>
                   </div>
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">Focus purely on numerical series, abstract visual matrices, cryptography rules, and seating arrangement logic puzzles.</p>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">{t('logicDesc')}</p>
                 </div>
                 <button onClick={() => startExam('Logic')} disabled={isGeneratingExam} className="w-full mt-6 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-amber-50">
-                  {isGeneratingExam ? '✨ Generating…' : 'Practice Logic Drills →'}
+                  {isGeneratingExam ? t('generating') : t('logicButton')}
                 </button>
               </div>
 
@@ -488,11 +494,11 @@ export default function Home() {
               <div className="bg-white border-2 border-blue-200 bg-blue-50/20 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
                 <div className="space-y-3">
                   <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💻</div>
-                  <h3 className="text-lg font-bold text-slate-800">Swift & Tech Concepts</h3>
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">Sharpen your computational thinking. Practice method overriding, for-while loop variables tracking, and basic core OOP terminology.</p>
+                  <h3 className="text-lg font-bold text-slate-800">{t('programmingTitle')}</h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">{t('programmingDesc')}</p>
                 </div>
                 <button onClick={() => startExam('Programming')} disabled={isGeneratingExam} className="w-full mt-6 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-blue-50">
-                  {isGeneratingExam ? '✨ Generating…' : 'Compile Code Drills →'}
+                  {isGeneratingExam ? t('generating') : t('programmingButton')}
                 </button>
               </div>
 
@@ -506,8 +512,8 @@ export default function Home() {
         <div className="w-full max-w-2xl flex flex-col items-center animate-fade-in">
           <div className="w-full bg-white shadow-sm border border-slate-200 rounded-2xl p-4 flex justify-between items-center gap-4 mb-4">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase">Track: {selectedCategory === 'All' ? 'Mixed' : selectedCategory}</p>
-              <p className="text-xs font-medium text-slate-500">Mode: {reviewMode === 'instan' ? 'Instant Correction' : 'AssessmentDay Simulator'}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase">{t('trackLabel')} {selectedCategory === 'All' ? 'Mixed' : selectedCategory}</p>
+              <p className="text-xs font-medium text-slate-500">{t('modeLabel')} {reviewMode === 'instan' ? t('instantFeedback') : t('assessmentStyle')}</p>
             </div>
             <div className="bg-slate-900 text-emerald-400 px-4 py-2 rounded-xl font-mono font-bold tracking-wider">
               ⏱️ {formatTime(timeLeft)}
@@ -519,7 +525,7 @@ export default function Home() {
           </div>
 
           <div className="w-full flex justify-between items-center px-1 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-            <span>Question {currentIndex + 1} of {shuffledQuestions.length}</span>
+            <span>{t('questionLabel')} {currentIndex + 1} of {shuffledQuestions.length}</span>
             <span className="text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-md">Sub: {currentQuestion.subCategory}</span>
           </div>
 
@@ -537,7 +543,7 @@ export default function Home() {
           />
 
           <button onClick={handleSkipQuestion} className="mt-2 text-sm font-semibold text-slate-400 hover:text-slate-700 underline transition-all">
-            Skip This Question (0 Pts, Avoid Penalty)
+            {t('skipButton')}
           </button>
         </div>
       )}
@@ -546,7 +552,7 @@ export default function Home() {
       {currentView === 'review' && (
         <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-slate-200 animate-fade-in flex flex-col items-center">
           <span className="text-5xl mb-2">🏅</span>
-          <h2 className="text-3xl font-black text-slate-900">Performance Review Sheet</h2>
+          <h2 className="text-3xl font-black text-slate-900">{t('performanceReviewTitle')}</h2>
           <p className="text-sm text-slate-500 mt-1 mb-6 text-center">Analyze your answers item by item to discover mistakes and master structural logic traps.</p>
 
           <div className="w-full grid grid-cols-4 gap-3 mb-8 text-center">
@@ -568,8 +574,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="w-full border-t border-slate-200 pt-6 text-left flex flex-col gap-8">
-            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">📋 Itemized Breakdown & Explanations:</h3>
+            <div className="w-full border-t border-slate-200 pt-6 text-left flex flex-col gap-8">
+            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">📋 {t('itemizedBreakdown')}</h3>
             
             {shuffledQuestions.map((q, idx) => {
               const statusJawaban = userAnswers[idx];
@@ -589,7 +595,7 @@ export default function Home() {
               return (
                 <div key={q.id} className="p-5 border border-slate-200 rounded-xl bg-slate-50/50 flex flex-col gap-3">
                   <div className="flex justify-between items-start flex-wrap gap-2">
-                    <span className="text-sm font-bold text-slate-500">Question #{idx + 1}</span>
+                    <span className="text-sm font-bold text-slate-500">{t('questionLabel')} #{idx + 1}</span>
                     <span className={`px-2.5 py-0.5 text-xs font-bold border rounded-md ${statusBadge}`}>{statusText}</span>
                   </div>
 

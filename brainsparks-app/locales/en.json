@@ -41,5 +41,12 @@
   "questionLabel": "Question",
   "streakPrefix": "🔥",
   "dayStreak": "Day Streak",
-  "totalXpLabel": "Progress to Next Rank"
+  "totalXpLabel": "Progress to Next Rank",
+  "lockAnswer": "Lock Answer",
+  "nextQuestion": "Next Question →",
+  "saveAndContinue": "Save & Continue →",
+  "explanationLabel": "💡 Explanation:",
+  "correctAnswerLabel": "Correct Answer",
+  "yourChoiceLabel": "Your Choice",
+  "solutionExplanationLabel": "💡 Solution Explanation:"
 }

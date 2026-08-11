@@ -1,12 +1,13 @@
-'use client';
+ 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { mockQuizQuestions, QuizQuestion } from '../data/flashcards';
 import { FlashcardComponent } from '../components/Flashcard';
 import { useI18n, LanguageSwitcher } from '../lib/i18n';
+import { studyMaterials } from '../data/studyMaterials';
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review' | 'materials'>('dashboard');
   
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Logic' | 'Programming'>('All');
   const [reviewMode, setReviewMode] = useState<'instan' | 'akhir'>('instan');
@@ -30,6 +31,7 @@ export default function Home() {
   const [generationNotice, setGenerationNotice] = useState<string | null>(null);
 
   const [subCategoryStats, setSubCategoryStats] = useState<Record<string, { correct: number; wrong: number }>>({});
+  const [completedMaterials, setCompletedMaterials] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -40,6 +42,9 @@ export default function Home() {
 
       const rawSubCategoryStats = localStorage.getItem('apple_academy_subcategory_stats');
       setSubCategoryStats(rawSubCategoryStats ? JSON.parse(rawSubCategoryStats) : {});
+
+      const savedMaterials = localStorage.getItem('apple_academy_completed_materials');
+      setCompletedMaterials(savedMaterials ? JSON.parse(savedMaterials) : []);
 
       const savedStreak = parseInt(localStorage.getItem('apple_academy_streak') || '0', 10);
       const lastActiveDateStr = localStorage.getItem('apple_academy_last_active_date');
@@ -144,6 +149,12 @@ export default function Home() {
       const updated = [...prev, ...questions.map(q => q.subCategory)].slice(-20);
       localStorage.setItem('apple_academy_recent_subcategories', JSON.stringify(updated));
     }
+  };
+
+  const markMaterialAsDone = (materialId: string) => {
+    const updated = Array.from(new Set([...completedMaterials, materialId]));
+    setCompletedMaterials(updated);
+    localStorage.setItem('apple_academy_completed_materials', JSON.stringify(updated));
   };
 
   const startExam = async (category: 'All' | 'Logic' | 'Programming') => {
@@ -339,7 +350,9 @@ export default function Home() {
                 </span>
               </div>
               
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl pt-1">{t('welcomeTitle')}</h1>
+              <div className="mt-2">
+                <LanguageSwitcher />
+              </div>
               <p className="text-slate-400 text-sm max-w-lg leading-relaxed">{t('welcomeDesc')}</p>
               
               {/* Progress Bar to Next Level */}
@@ -356,10 +369,7 @@ export default function Home() {
             
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center min-w-[140px] shadow-inner backdrop-blur-sm self-stretch md:self-auto flex md:flex-col justify-center items-center gap-2 md:gap-0">
               <div>
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl pt-1">{t('welcomeTitle')}</h1>
-              <div className="mt-2">
-                <LanguageSwitcher />
-              </div>
+                <span className="text-xs text-indigo-200 block font-bold uppercase tracking-wider mb-1">{t('totalPower')}</span>
                 <span className="text-4xl font-black text-amber-400 tracking-tight">{totalXp}</span>
                 <span className="text-xs text-slate-400 block font-medium mt-0.5">{t('xpPoints')}</span>
               </div>
@@ -459,8 +469,15 @@ export default function Home() {
 
           {/* SYLLABUS CORE STUDY CARDS SECTION */}
           <div className="space-y-4">
-            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 {t('syllabusTitle')}</h2>
-            <p className="text-xs text-slate-400 font-medium -mt-2">{t('syllabusDesc')}</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 {t('syllabusTitle')}</h2>
+                <p className="text-xs text-slate-400 font-medium -mt-2">{t('syllabusDesc')}</p>
+              </div>
+              <button onClick={() => setCurrentView('materials')} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+                📘 Study Materials
+              </button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* TRACK 1: MIXED TOPICS */}
@@ -507,7 +524,67 @@ export default function Home() {
         </div>
       )}
 
-      {/* VIEW 2: LIVE QUIZ LAYING INTERFACE */}
+      {/* VIEW 2: STUDY MATERIALS */}
+      {currentView === 'materials' && (
+        <div className="w-full max-w-5xl space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900">📘 Study Materials</h2>
+              <p className="text-sm text-slate-500">Baca materi singkat sebelum mulai latihan agar lebih siap menghadapi soal.</p>
+            </div>
+            <button onClick={() => setCurrentView('dashboard')} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold">
+              ← Back to Dashboard
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {studyMaterials.map((material) => {
+              const isCompleted = completedMaterials.includes(material.id);
+              return (
+                <div key={material.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">{material.category}</span>
+                      <h3 className="text-lg font-bold text-slate-800 mt-1">{material.title}</h3>
+                    </div>
+                    {isCompleted && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">✓ Done</span>}
+                  </div>
+
+                  <p className="text-sm text-slate-600 mt-3 leading-relaxed">{material.summary}</p>
+
+                  <ul className="mt-4 space-y-2 text-sm text-slate-600">
+                    {material.keyPoints.map((point) => (
+                      <li key={point} className="flex gap-2">
+                        <span className="text-indigo-500">•</span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-4 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm text-slate-600">
+                    <strong className="text-slate-800">Tip:</strong> {material.quickTip}
+                  </div>
+
+                  <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-sm text-slate-600">
+                    <strong className="text-indigo-800">Example:</strong> {material.example}
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <button onClick={() => markMaterialAsDone(material.id)} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold">
+                      {isCompleted ? 'Reviewed' : 'Mark as Read'}
+                    </button>
+                    <button onClick={() => startExam(material.category)} className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm font-semibold">
+                      Practice {material.category} →
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 3: LIVE QUIZ LAYING INTERFACE */}
       {currentView === 'quiz' && (
         <div className="w-full max-w-2xl flex flex-col items-center animate-fade-in">
           <div className="w-full bg-white shadow-sm border border-slate-200 rounded-2xl p-4 flex justify-between items-center gap-4 mb-4">
@@ -557,19 +634,19 @@ export default function Home() {
 
           <div className="w-full grid grid-cols-4 gap-3 mb-8 text-center">
             <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
-              <span className="block text-xs font-bold text-emerald-700 uppercase">Correct (+4)</span>
+              <span className="block text-xs font-bold text-emerald-700 uppercase">{t('correctPlus')}</span>
               <span className="text-2xl font-black text-emerald-600">{stats.correct}</span>
             </div>
             <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl">
-              <span className="block text-xs font-bold text-rose-700 uppercase">Incorrect (-1)</span>
+              <span className="block text-xs font-bold text-rose-700 uppercase">{t('incorrectMinus')}</span>
               <span className="text-2xl font-black text-rose-600">{stats.wrong}</span>
             </div>
             <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl">
-              <span className="block text-xs font-bold text-slate-500 uppercase">Skipped (0)</span>
+              <span className="block text-xs font-bold text-slate-500 uppercase">{t('skipped')}</span>
               <span className="text-2xl font-black text-slate-700">{stats.skipped}</span>
             </div>
             <div className="bg-indigo-600 text-white p-4 rounded-xl shadow-md">
-              <span className="block text-xs font-bold text-indigo-200 uppercase">Session Score</span>
+              <span className="block text-xs font-bold text-indigo-200 uppercase">{t('sessionScore')}</span>
               <span className="text-2xl font-black text-white">{stats.totalScore}</span>
             </div>
           </div>
@@ -582,14 +659,14 @@ export default function Home() {
               const indexOpsiTerpilih = selectedIndicesTracker[idx];
               
               let statusBadge = "bg-slate-100 text-slate-600 border-slate-200";
-              let statusText = "⚠️ SKIPPED (0 Pts)";
+              let statusText = `⚠️ ${t('skipped')} (0 Pts)`;
               
               if (statusJawaban === true) {
                 statusBadge = "bg-emerald-50 text-emerald-700 border-emerald-200";
-                statusText = "✅ CORRECT (+4 Pts)";
+                statusText = `✅ ${t('correctPlus')} (0 Pts)`;
               } else if (statusJawaban === false) {
                 statusBadge = "bg-rose-50 text-rose-700 border-rose-200";
-                statusText = "❌ INCORRECT (-1 Pts)";
+                statusText = `❌ ${t('incorrectMinus')} (0 Pts)`;
               }
 
               return (
@@ -620,15 +697,15 @@ export default function Home() {
                       return (
                         <div key={optIdx} className={`p-3 border rounded-lg text-sm flex justify-between items-center ${borderStyle}`}>
                           <span>{opt}</span>
-                          {optIdx === q.correctAnswerIndex && <span className="text-xs font-bold text-emerald-600 bg-emerald-100/50 px-1.5 py-0.5 rounded">Correct Answer</span>}
-                          {indexOpsiTerpilih === optIdx && optIdx !== q.correctAnswerIndex && <span className="text-xs font-bold text-rose-600 bg-rose-100/50 px-1.5 py-0.5 rounded">Your Choice</span>}
+                          {optIdx === q.correctAnswerIndex && <span className="text-xs font-bold text-emerald-600 bg-emerald-100/50 px-1.5 py-0.5 rounded">{t('correctAnswerLabel')}</span>}
+                          {indexOpsiTerpilih === optIdx && optIdx !== q.correctAnswerIndex && <span className="text-xs font-bold text-rose-600 bg-rose-100/50 px-1.5 py-0.5 rounded">{t('yourChoiceLabel')}</span>}
                         </div>
                       );
                     })}
                   </div>
 
                   <div className="bg-indigo-50/50 border border-indigo-100 p-4 rounded-xl text-xs sm:text-sm text-slate-600 mt-2">
-                    <strong className="text-indigo-900 font-bold block mb-1">💡 Solution Explanation:</strong>
+                    <strong className="text-indigo-900 font-bold block mb-1">{t('solutionExplanationLabel')}</strong>
                     {q.explanation}
                   </div>
                 </div>
@@ -637,7 +714,7 @@ export default function Home() {
           </div>
 
           <button onClick={() => setCurrentView('dashboard')} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-md mt-8">
-            Back to Learning Dashboard 🏠
+            {t('backToDashboard')}
           </button>
         </div>
       )}

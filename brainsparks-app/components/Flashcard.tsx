@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../lib/i18n';
 
 interface QuizProps {
   question: string;
@@ -27,6 +28,7 @@ export const FlashcardComponent: React.FC<QuizProps> = ({
 }) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     setSelectedOption(null);
@@ -116,7 +118,7 @@ export const FlashcardComponent: React.FC<QuizProps> = ({
       <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col gap-4">
         {reviewMode === 'instan' && hasSubmitted && (
           <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm text-slate-600 leading-relaxed">
-            <strong className="text-slate-800 block mb-1">💡 Explanation:</strong>
+            <strong className="text-slate-800 block mb-1">{t('explanationLabel')}</strong>
             {explanation}
           </div>
         )}
@@ -129,8 +131,8 @@ export const FlashcardComponent: React.FC<QuizProps> = ({
           }`}
         >
           {reviewMode === 'instan' 
-            ? (!hasSubmitted ? 'Lock Answer' : 'Next Question →')
-            : 'Save & Continue →'}
+            ? (!hasSubmitted ? t('lockAnswer') : t('nextQuestion'))
+            : t('saveAndContinue')}
         </button>
       </div>
     </div>

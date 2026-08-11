@@ -41,5 +41,12 @@
   "questionLabel": "Pertanyaan",
   "streakPrefix": "🔥",
   "dayStreak": "Hari Beruntun",
-  "totalXpLabel": "Progres ke Level"
+  "totalXpLabel": "Progres ke Level",
+  "lockAnswer": "Kunci Jawaban",
+  "nextQuestion": "Pertanyaan Berikutnya →",
+  "saveAndContinue": "Simpan & Lanjutkan →",
+  "explanationLabel": "💡 Penjelasan:",
+  "correctAnswerLabel": "Jawaban Benar",
+  "yourChoiceLabel": "Pilihan Anda",
+  "solutionExplanationLabel": "💡 Penjelasan Solusi:"
 }

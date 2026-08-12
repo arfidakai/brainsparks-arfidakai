@@ -8,8 +8,8 @@ const resources: Record<Locale, Record<string, string>> = {
   id,
 };
 
-// global locale state to keep instances in sync
-let globalLocale: Locale = (typeof window !== 'undefined' && (localStorage.getItem('locale') as Locale)) || 'en';
+// Keep the first render deterministic on both server and client.
+let globalLocale: Locale = 'en';
 
 const setGlobalLocale = (loc: Locale) => {
   globalLocale = loc;
@@ -23,9 +23,16 @@ export const useI18n = () => {
   const [locale, setLocaleState] = useState<Locale>(() => globalLocale);
 
   useEffect(() => {
+    const savedLocale = localStorage.getItem('locale') as Locale | null;
+    if (savedLocale && savedLocale !== globalLocale) {
+      globalLocale = savedLocale;
+      setLocaleState(savedLocale);
+    }
+
     const handler = (e: Event) => {
       const ev = e as CustomEvent<string>;
       const newLoc = (ev && (ev.detail as Locale)) || (localStorage.getItem('locale') as Locale) || 'en';
+      globalLocale = newLoc;
       setLocaleState(newLoc);
     };
 

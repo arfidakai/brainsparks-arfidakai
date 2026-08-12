@@ -32,6 +32,8 @@ export default function Home() {
 
   const [subCategoryStats, setSubCategoryStats] = useState<Record<string, { correct: number; wrong: number }>>({});
   const [completedMaterials, setCompletedMaterials] = useState<string[]>([]);
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const [selectedSubtopicId, setSelectedSubtopicId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -156,6 +158,17 @@ export default function Home() {
     setCompletedMaterials(updated);
     localStorage.setItem('apple_academy_completed_materials', JSON.stringify(updated));
   };
+
+  const openMaterialsView = () => {
+    setSelectedTrackId(null);
+    setSelectedSubtopicId(null);
+    setCurrentView('materials');
+  };
+
+  const activeTrack = selectedTrackId ? studyMaterials.find((material) => material.id === selectedTrackId) ?? null : null;
+  const activeSubtopic = activeTrack && selectedSubtopicId
+    ? activeTrack.subtopics.find((subtopic) => subtopic.id === selectedSubtopicId) ?? null
+    : null;
 
   const startExam = async (category: 'All' | 'Logic' | 'Programming') => {
     setSelectedCategory(category);
@@ -474,7 +487,7 @@ export default function Home() {
                 <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 {t('syllabusTitle')}</h2>
                 <p className="text-xs text-slate-400 font-medium -mt-2">{t('syllabusDesc')}</p>
               </div>
-              <button onClick={() => setCurrentView('materials')} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+              <button onClick={openMaterialsView} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
                 📘 Study Materials
               </button>
             </div>
@@ -530,57 +543,156 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h2 className="text-2xl font-black text-slate-900">📘 Study Materials</h2>
-              <p className="text-sm text-slate-500">Baca materi singkat sebelum mulai latihan agar lebih siap menghadapi soal.</p>
+              <p className="text-sm text-slate-500">Klik topik utama, lanjut ke subtopik, lalu buka materi detail yang kamu butuhkan.</p>
             </div>
-            <button onClick={() => setCurrentView('dashboard')} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold">
+            <button
+              onClick={() => {
+                setSelectedTrackId(null);
+                setSelectedSubtopicId(null);
+                setCurrentView('dashboard');
+              }}
+              className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold"
+            >
               ← Back to Dashboard
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {studyMaterials.map((material) => {
-              const isCompleted = completedMaterials.includes(material.id);
-              return (
-                <div key={material.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          {!activeTrack && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {studyMaterials.map((track) => (
+                <button
+                  key={track.id}
+                  onClick={() => {
+                    setSelectedTrackId(track.id);
+                    setSelectedSubtopicId(null);
+                  }}
+                  className="text-left bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">{material.category}</span>
-                      <h3 className="text-lg font-bold text-slate-800 mt-1">{material.title}</h3>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl">
+                        {track.emoji}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-indigo-600">Topik Utama</p>
+                        <h3 className="text-lg font-bold text-slate-900 mt-1">{track.title}</h3>
+                      </div>
                     </div>
-                    {isCompleted && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">✓ Done</span>}
+                    <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                      {track.subtopics.length} subtopik
+                    </span>
                   </div>
+                  <p className="text-sm text-slate-600 mt-4 leading-relaxed">{track.description}</p>
+                  <div className="mt-4 text-sm font-semibold text-indigo-700">Klik untuk buka materi →</div>
+                </button>
+              ))}
+            </div>
+          )}
 
-                  <p className="text-sm text-slate-600 mt-3 leading-relaxed">{material.summary}</p>
+          {activeTrack && (
+            <div className="space-y-5">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-600">Topik Utama</p>
+                  <h3 className="text-2xl font-black text-slate-900 mt-1 flex items-center gap-2">
+                    <span>{activeTrack.emoji}</span>
+                    <span>{activeTrack.title}</span>
+                  </h3>
+                  <p className="text-sm text-slate-600 mt-2 max-w-2xl">{activeTrack.description}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedTrackId(null);
+                    setSelectedSubtopicId(null);
+                  }}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold"
+                >
+                  ← Lihat semua topik
+                </button>
+              </div>
 
-                  <ul className="mt-4 space-y-2 text-sm text-slate-600">
-                    {material.keyPoints.map((point) => (
-                      <li key={point} className="flex gap-2">
-                        <span className="text-indigo-500">•</span>
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-4 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm text-slate-600">
-                    <strong className="text-slate-800">Tip:</strong> {material.quickTip}
-                  </div>
-
-                  <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-sm text-slate-600">
-                    <strong className="text-indigo-800">Example:</strong> {material.example}
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <button onClick={() => markMaterialAsDone(material.id)} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold">
-                      {isCompleted ? 'Reviewed' : 'Mark as Read'}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {activeTrack.subtopics.map((subtopic) => {
+                  const isActive = selectedSubtopicId === subtopic.id;
+                  return (
+                    <button
+                      key={subtopic.id}
+                      onClick={() => setSelectedSubtopicId(subtopic.id)}
+                      className={`text-left rounded-2xl border p-5 shadow-sm transition-all ${isActive ? 'border-indigo-300 bg-indigo-50/60' : 'border-slate-200 bg-white hover:shadow-md'}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500">Subtopik</p>
+                          <h4 className="text-lg font-bold text-slate-900 mt-1">{subtopic.title}</h4>
+                        </div>
+                        <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                          {subtopic.materials.length} materi
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600 mt-3 leading-relaxed">{subtopic.description}</p>
+                      <div className="mt-4 text-sm font-semibold text-indigo-700">Klik untuk lihat detail →</div>
                     </button>
-                    <button onClick={() => startExam(material.category)} className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm font-semibold">
-                      Practice {material.category} →
+                  );
+                })}
+              </div>
+
+              {activeSubtopic && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Materi Detail</p>
+                      <h4 className="text-xl font-black text-slate-900 mt-1">{activeSubtopic.title}</h4>
+                    </div>
+                    <button
+                      onClick={() => setSelectedSubtopicId(null)}
+                      className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold"
+                    >
+                      Tutup subtopik
                     </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {activeSubtopic.materials.map((material) => {
+                      const isCompleted = completedMaterials.includes(material.id);
+                      return (
+                        <div key={material.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                          <div className="flex items-start justify-between gap-3">
+                            <h5 className="text-lg font-bold text-slate-900">{material.title}</h5>
+                            {isCompleted && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">✓ Done</span>}
+                          </div>
+
+                          <p className="text-sm text-slate-600 mt-3 leading-relaxed">{material.summary}</p>
+
+                          <ul className="mt-4 space-y-2 text-sm text-slate-600">
+                            {material.keyPoints.map((point) => (
+                              <li key={point} className="flex gap-2">
+                                <span className="text-indigo-500">•</span>
+                                <span>{point}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <div className="mt-4 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm text-slate-600">
+                            <strong className="text-slate-800">Tip:</strong> {material.quickTip}
+                          </div>
+
+                          <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-sm text-slate-600">
+                            <strong className="text-indigo-800">Example:</strong> {material.example}
+                          </div>
+
+                          <div className="mt-5 flex flex-wrap gap-2">
+                            <button onClick={() => markMaterialAsDone(material.id)} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold">
+                              {isCompleted ? 'Reviewed' : 'Mark as Read'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

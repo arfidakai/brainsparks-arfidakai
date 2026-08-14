@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { mockQuizQuestions, QuizQuestion } from '../data/flashcards';
 import { FlashcardComponent } from '../components/Flashcard';
 import { useI18n, LanguageSwitcher } from '../lib/i18n';
-import { studyMaterials } from '../data/studyMaterials';
+import { studyMaterials as studyMaterialsId } from '../data/studyMaterials';
+import { studyMaterials as studyMaterialsEn } from '../data/studyMaterials.en';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review' | 'materials'>('dashboard');
@@ -164,6 +165,9 @@ export default function Home() {
     setSelectedSubtopicId(null);
     setCurrentView('materials');
   };
+
+  const { t, locale } = useI18n();
+  const studyMaterials = locale === 'en' ? studyMaterialsEn : studyMaterialsId;
 
   const activeTrack = selectedTrackId ? studyMaterials.find((material) => material.id === selectedTrackId) ?? null : null;
   const activeSubtopic = activeTrack && selectedSubtopicId
@@ -331,8 +335,6 @@ export default function Home() {
   const currentRank = getRankInfo(totalXp);
   const stats = calculateFinalStats();
   const currentQuestion = shuffledQuestions[currentIndex];
-
-  const { t } = useI18n();
 
   // Hitung persentase akurasi global seumur hidup
   const totalLifetimeAnswers = lifetimeCorrect + lifetimeWrong;

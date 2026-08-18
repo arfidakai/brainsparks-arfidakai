@@ -23,9 +23,7 @@ export interface StudyTrack {
 }
 
 export const studyMaterials: StudyTrack[] = [
-  // =========================================================
-  // COMPUTER FUNDAMENTALS
-  // =========================================================
+
   {
     id: 'computer-fundamentals',
     title: 'Computer Fundamentals',

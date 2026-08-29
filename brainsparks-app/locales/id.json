@@ -48,5 +48,15 @@
   "explanationLabel": "💡 Penjelasan:",
   "correctAnswerLabel": "Jawaban Benar",
   "yourChoiceLabel": "Pilihan Anda",
-  "solutionExplanationLabel": "💡 Penjelasan Solusi:"
+  "solutionExplanationLabel": "💡 Penjelasan Solusi:",
+  "notPracticedTodayTitle": "Kamu belum drill hari ini!",
+  "notPracticedTodayDesc": "20-30 menit tiap hari jauh lebih efektif daripada belajar 3 jam sekali seminggu. Jaga terus streak-mu.",
+  "notPracticedTodayCta": "Mulai Drill Hari Ini →",
+  "graceUsedBadge": "🛡️ Streak shield terpakai — 1 hari terlewat tanpa memutus streak-mu.",
+  "reviewMistakesTitle": "Review Kesalahan",
+  "reviewMistakesDesc": "Ulangi semua soal yang pernah kamu jawab salah. Jawab benar untuk menghapusnya dari daftar ini.",
+  "reviewMistakesButton": "Review Kesalahan →",
+  "reviewMistakesEmpty": "Belum ada kesalahan",
+  "reviewMistakesCount": "soal tersimpan",
+  "reviewTrackLabel": "Review Kesalahan"
 }

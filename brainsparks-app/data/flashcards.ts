@@ -212,6 +212,64 @@ print(5 << 1)`,
     ],
     correctAnswerIndex: 1,
     explanation: 'A stack follows the LIFO (Last In, First Out) principle, where the last element added is the first one to be removed.'
+  },
+
+  // --- CRYPTARITHM ---
+  {
+    id: 'l9',
+    category: 'Logic',
+    subCategory: 'Cryptarithm',
+    question: 'In the classic cryptarithm SEND + MORE = MONEY, each letter represents a unique digit (0-9). What must the value of M be?',
+    options: ['0', '1', '9', 'Cannot be determined'],
+    correctAnswerIndex: 1,
+    explanation: 'SEND and MORE are both 4-digit numbers, so their sum can be at most 19998. Since MONEY is a 5-digit number, the leading digit M of the result must be the carried-over 1 — so M = 1.'
+  },
+  {
+    id: 'l10',
+    category: 'Logic',
+    subCategory: 'Cryptarithm',
+    question: 'If TWO + TWO = FOUR (each letter is a unique digit, and no leading letter is zero), what is the parity (odd/even) of the digit R?',
+    options: ['R must be even', 'R must be odd', 'R can be either', 'No valid solution exists'],
+    correctAnswerIndex: 0,
+    explanation: 'In the units column, O + O = R (plus a possible carry of 10 which does not change parity of the last digit). Since O + O is always even, R must be even.'
+  },
+
+  // --- NUMBER SERIES ---
+  {
+    id: 'l11',
+    category: 'Logic',
+    subCategory: 'Number Series',
+    question: 'Determine the next number in the sequence: 2, 6, 12, 20, 30, ?',
+    options: ['36', '40', '42', '44'],
+    correctAnswerIndex: 2,
+    explanation: 'The differences between terms increase by 2 each time: +4, +6, +8, +10, +12. Each term equals n(n+1), so the next term is 6x7 = 42.'
+  },
+
+  // --- SEATING ARRANGEMENT ---
+  {
+    id: 'l12',
+    category: 'Logic',
+    subCategory: 'Seating Arrangement',
+    question: 'A, B, C, and D sit around a circular table. A does not sit next to B. C sits next to D. If B sits next to D, who sits next to A?',
+    options: ['B', 'C', 'D', 'Nobody, A sits alone'],
+    correctAnswerIndex: 1,
+    explanation: 'Since C must sit next to D, and B must also sit next to D, the order around the table is B-D-C (or C-D-B). That leaves only one remaining seat for A, which is next to C.'
+  },
+
+  // --- SILOGISME (VERBAL REASONING) ---
+  {
+    id: 'l13',
+    category: 'Logic',
+    subCategory: 'Syllogism',
+    question: 'All developers like logic. Some people who like logic also like design. Is it necessarily true that "some developers like design"?',
+    options: [
+      'Yes, it is necessarily true.',
+      'No, the conclusion does not necessarily follow.',
+      'Only true if all designers are developers.',
+      'Only true if no developers like design.'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'The "some people who like logic also like design" group is not guaranteed to overlap with the "developers" subset of logic-lovers — the people who like both logic and design could all be non-developers. The conclusion is a classic invalid syllogism trap.'
   }
 
 ];

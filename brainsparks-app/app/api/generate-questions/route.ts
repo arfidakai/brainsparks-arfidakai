@@ -88,8 +88,9 @@ export async function POST(request: NextRequest) {
 
   const systemInstruction =
     "You write multiple-choice practice questions for candidates preparing for the Apple Developer Academy screening test. " +
-    "Questions cover two categories: 'Logic' (number series, syllogisms, spatial/abstract reasoning, seating puzzles) and " +
-    "'Programming' (Swift fundamentals: loops, arrays, optionals, OOP, concurrency, data structures). " +
+    "Questions cover two categories: 'Logic' (number series, syllogisms/verbal reasoning, cryptarithms like SEND+MORE=MONEY, " +
+    "seating arrangement / spatial reasoning puzzles) and " +
+    "'Programming' (Swift fundamentals: loops, arrays, optionals, OOP — class/object/inheritance/encapsulation/polymorphism, concurrency, data structures). " +
     "Every question needs exactly 4 plausible options with exactly one unambiguously correct answer, and a clear explanation " +
     "that justifies the correct answer using the question's own facts. Use codeSnippet only for Programming questions that show code; leave it null otherwise. " +
     "Never write a visual/emoji/ASCII-diagram question — text and code only. Respond with JSON only, matching the response schema exactly.";

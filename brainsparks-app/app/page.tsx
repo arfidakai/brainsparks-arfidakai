@@ -7,6 +7,23 @@ import { useI18n, LanguageSwitcher } from '../lib/i18n';
 import { studyMaterials as studyMaterialsId } from '../data/studyMaterials';
 import { studyMaterials as studyMaterialsEn } from '../data/studyMaterials.en';
 
+const STREAK_GRACE_KEY = 'apple_academy_streak_grace_last_used';
+
+const isStreakGraceAvailable = (today: Date): boolean => {
+  if (typeof window === 'undefined') return false;
+  const raw = localStorage.getItem(STREAK_GRACE_KEY);
+  if (!raw) return true;
+  const last = new Date(raw);
+  last.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+  return diffDays >= 7;
+};
+
+const consumeStreakGrace = (today: Date) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STREAK_GRACE_KEY, today.toISOString());
+};
+
 export default function Home() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review' | 'materials'>('dashboard');
   
@@ -36,6 +53,11 @@ export default function Home() {
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [selectedSubtopicId, setSelectedSubtopicId] = useState<string | null>(null);
 
+  const [mistakes, setMistakes] = useState<QuizQuestion[]>([]);
+  const [isReviewSession, setIsReviewSession] = useState<boolean>(false);
+  const [practicedToday, setPracticedToday] = useState<boolean>(true);
+  const [graceJustUsed, setGraceJustUsed] = useState<boolean>(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setTotalXp(parseInt(localStorage.getItem('apple_academy_xp') || '0', 10));
@@ -49,20 +71,36 @@ export default function Home() {
       const savedMaterials = localStorage.getItem('apple_academy_completed_materials');
       setCompletedMaterials(savedMaterials ? JSON.parse(savedMaterials) : []);
 
+      const savedMistakes = localStorage.getItem('apple_academy_mistakes');
+      setMistakes(savedMistakes ? JSON.parse(savedMistakes) : []);
+
       const savedStreak = parseInt(localStorage.getItem('apple_academy_streak') || '0', 10);
       const lastActiveDateStr = localStorage.getItem('apple_academy_last_active_date');
-      
-      if (lastActiveDateStr && savedStreak > 0) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (lastActiveDateStr) {
         const lastDate = new Date(lastActiveDateStr);
         lastDate.setHours(0, 0, 0, 0);
-        
+        setPracticedToday(today.getTime() === lastDate.getTime());
+      } else {
+        setPracticedToday(false);
+      }
+
+      if (lastActiveDateStr && savedStreak > 0) {
+        const lastDate = new Date(lastActiveDateStr);
+        lastDate.setHours(0, 0, 0, 0);
+
         const diffTime = Math.abs(today.getTime() - lastDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays > 1) {
+
+        if (diffDays === 2 && isStreakGraceAvailable(today)) {
+          // 1x/week streak recovery: missed exactly one day, spend the weekly shield instead of resetting.
+          consumeStreakGrace(today);
+          setGraceJustUsed(true);
+          setStreakCount(savedStreak);
+        } else if (diffDays > 1) {
           setStreakCount(0);
           localStorage.setItem('apple_academy_streak', '0');
         } else {
@@ -154,6 +192,32 @@ export default function Home() {
     }
   };
 
+  const addMistake = (q: QuizQuestion) => {
+    setMistakes((prev) => {
+      if (prev.some((m) => m.id === q.id)) return prev;
+      const updated = [...prev, q];
+      localStorage.setItem('apple_academy_mistakes', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const removeMistake = (id: string) => {
+    setMistakes((prev) => {
+      if (!prev.some((m) => m.id === id)) return prev;
+      const updated = prev.filter((m) => m.id !== id);
+      localStorage.setItem('apple_academy_mistakes', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const startReviewMistakes = () => {
+    if (mistakes.length === 0) return;
+    setIsReviewSession(true);
+    setSelectedCategory('All');
+    const shuffled = [...mistakes].sort(() => Math.random() - 0.5);
+    beginExamWithQuestions(shuffled);
+  };
+
   const markMaterialAsDone = (materialId: string) => {
     const updated = Array.from(new Set([...completedMaterials, materialId]));
     setCompletedMaterials(updated);
@@ -176,6 +240,7 @@ export default function Home() {
 
   const startExam = async (category: 'All' | 'Logic' | 'Programming') => {
     setSelectedCategory(category);
+    setIsReviewSession(false);
     setIsGeneratingExam(true);
     setGenerationNotice(null);
 
@@ -219,6 +284,12 @@ export default function Home() {
     setUserAnswers((prev) => ({ ...prev, [currentIndex]: isCorrect }));
     setSelectedIndicesTracker((prev) => ({ ...prev, [currentIndex]: chosenOptionIndex }));
     recordSubCategoryResult(shuffledQuestions[currentIndex].subCategory, isCorrect);
+
+    if (isCorrect) {
+      removeMistake(shuffledQuestions[currentIndex].id);
+    } else {
+      addMistake(shuffledQuestions[currentIndex]);
+    }
 
     if (currentIndex < shuffledQuestions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -277,10 +348,17 @@ export default function Home() {
 
       if (diffDays === 1) {
         newStreak = streakCount + 1;
+      } else if (diffDays === 2 && isStreakGraceAvailable(today)) {
+        // 1x/week streak recovery: missed exactly one day, spend the weekly shield instead of resetting.
+        consumeStreakGrace(today);
+        setGraceJustUsed(true);
+        newStreak = streakCount + 1;
       } else if (diffDays > 1) {
         newStreak = 1;
       }
     }
+
+    setPracticedToday(true);
 
     setTotalXp(newTotalXp);
     setTestsTaken(newTestsTaken);
@@ -391,6 +469,29 @@ export default function Home() {
             </div>
           </div>
 
+          {/* DAILY REMINDER BANNER */}
+          {!practicedToday && (
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+              <div>
+                <p className="text-sm font-bold text-amber-800">⏰ {t('notPracticedTodayTitle')}</p>
+                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">{t('notPracticedTodayDesc')}</p>
+              </div>
+              <button
+                onClick={() => startExam('All')}
+                disabled={isGeneratingExam}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold whitespace-nowrap transition-all"
+              >
+                {t('notPracticedTodayCta')}
+              </button>
+            </div>
+          )}
+
+          {graceJustUsed && (
+            <div className="w-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-xl p-3">
+              {t('graceUsedBadge')}
+            </div>
+          )}
+
           {/* GLOBAL PERFORMANCE STATISTICS GRAPH ROW */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
@@ -493,8 +594,8 @@ export default function Home() {
                 📘 Study Materials
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
               {/* TRACK 1: MIXED TOPICS */}
               <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
                 <div className="space-y-3">
@@ -531,6 +632,21 @@ export default function Home() {
                 </div>
                 <button onClick={() => startExam('Programming')} disabled={isGeneratingExam} className="w-full mt-6 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-blue-50">
                   {isGeneratingExam ? t('generating') : t('programmingButton')}
+                </button>
+              </div>
+
+              {/* TRACK 4: REVIEW MISTAKES */}
+              <div className="bg-white border-2 border-rose-200 bg-rose-50/20 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🔁</div>
+                  <h3 className="text-lg font-bold text-slate-800">{t('reviewMistakesTitle')}</h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">{t('reviewMistakesDesc')}</p>
+                  <p className="text-xs font-bold text-rose-600">
+                    {mistakes.length > 0 ? `${mistakes.length} ${t('reviewMistakesCount')}` : t('reviewMistakesEmpty')}
+                  </p>
+                </div>
+                <button onClick={startReviewMistakes} disabled={mistakes.length === 0 || isGeneratingExam} className="w-full mt-6 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-rose-50">
+                  {t('reviewMistakesButton')}
                 </button>
               </div>
 
@@ -703,7 +819,7 @@ export default function Home() {
         <div className="w-full max-w-2xl flex flex-col items-center animate-fade-in">
           <div className="w-full bg-white shadow-sm border border-slate-200 rounded-2xl p-4 flex justify-between items-center gap-4 mb-4">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase">{t('trackLabel')} {selectedCategory === 'All' ? 'Mixed' : selectedCategory}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase">{t('trackLabel')} {isReviewSession ? t('reviewTrackLabel') : (selectedCategory === 'All' ? 'Mixed' : selectedCategory)}</p>
               <p className="text-xs font-medium text-slate-500">{t('modeLabel')} {reviewMode === 'instan' ? t('instantFeedback') : t('assessmentStyle')}</p>
             </div>
             <div className="bg-slate-900 text-emerald-400 px-4 py-2 rounded-xl font-mono font-bold tracking-wider">

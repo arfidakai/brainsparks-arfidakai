@@ -48,5 +48,15 @@
   "explanationLabel": "💡 Explanation:",
   "correctAnswerLabel": "Correct Answer",
   "yourChoiceLabel": "Your Choice",
-  "solutionExplanationLabel": "💡 Solution Explanation:"
+  "solutionExplanationLabel": "💡 Solution Explanation:",
+  "notPracticedTodayTitle": "You haven't drilled today!",
+  "notPracticedTodayDesc": "20-30 minutes a day beats a 3-hour cram once a week. Keep the streak alive.",
+  "notPracticedTodayCta": "Start Today's Drill →",
+  "graceUsedBadge": "🛡️ Streak shield used — 1 day skipped without breaking your streak.",
+  "reviewMistakesTitle": "Review Mistakes",
+  "reviewMistakesDesc": "Retry every question you've ever gotten wrong. Answer correctly to clear it from this list.",
+  "reviewMistakesButton": "Review Mistakes →",
+  "reviewMistakesEmpty": "No mistakes",
+  "reviewMistakesCount": "questions saved",
+  "reviewTrackLabel": "Review Mistakes"
 }

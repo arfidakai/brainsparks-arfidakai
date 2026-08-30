@@ -7,8 +7,6 @@ const resources: Record<Locale, Record<string, string>> = {
   en,
   id,
 };
-
-// Keep the first render deterministic on both server and client.
 let globalLocale: Locale = 'en';
 
 const setGlobalLocale = (loc: Locale) => {

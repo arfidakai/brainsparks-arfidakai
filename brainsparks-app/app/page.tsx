@@ -24,8 +24,35 @@ const consumeStreakGrace = (today: Date) => {
   localStorage.setItem(STREAK_GRACE_KEY, today.toISOString());
 };
 
+const HISTORY_KEY = 'apple_academy_history';
+const HISTORY_LIMIT = 30;
+
+interface HistoryQuestionRecord {
+  id: string;
+  subCategory: string;
+  question: string;
+  codeSnippet?: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+  chosenIndex: number | null;
+  status: 'correct' | 'wrong' | 'skipped';
+}
+
+interface SessionRecord {
+  id: string;
+  date: string;
+  category: string;
+  reviewMode: 'instan' | 'akhir';
+  correct: number;
+  wrong: number;
+  skipped: number;
+  score: number;
+  questions: HistoryQuestionRecord[];
+}
+
 export default function Home() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review' | 'materials'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'quiz' | 'review' | 'materials' | 'history'>('dashboard');
   
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Logic' | 'Programming'>('All');
   const [reviewMode, setReviewMode] = useState<'instan' | 'akhir'>('instan');
@@ -58,6 +85,9 @@ export default function Home() {
   const [practicedToday, setPracticedToday] = useState<boolean>(true);
   const [graceJustUsed, setGraceJustUsed] = useState<boolean>(false);
 
+  const [sessionHistory, setSessionHistory] = useState<SessionRecord[]>([]);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setTotalXp(parseInt(localStorage.getItem('apple_academy_xp') || '0', 10));
@@ -73,6 +103,9 @@ export default function Home() {
 
       const savedMistakes = localStorage.getItem('apple_academy_mistakes');
       setMistakes(savedMistakes ? JSON.parse(savedMistakes) : []);
+
+      const savedHistory = localStorage.getItem(HISTORY_KEY);
+      setSessionHistory(savedHistory ? JSON.parse(savedHistory) : []);
 
       const savedStreak = parseInt(localStorage.getItem('apple_academy_streak') || '0', 10);
       const lastActiveDateStr = localStorage.getItem('apple_academy_last_active_date');
@@ -325,6 +358,42 @@ export default function Home() {
 
     const sessionScore = (sessionCorrect * 4) + (sessionWrong * -1);
     const addedXp = sessionScore > 0 ? sessionScore : 0;
+
+    const questionRecords: HistoryQuestionRecord[] = shuffledQuestions.map((q, index) => {
+      let ans = userAnswers[index];
+      let chosen = selectedIndicesTracker[index] ?? null;
+      if (index === currentIndex) {
+        ans = lastAnswerStatus;
+        chosen = lastChosenIndex;
+      }
+      return {
+        id: q.id,
+        subCategory: q.subCategory,
+        question: q.question,
+        codeSnippet: q.codeSnippet,
+        options: q.options,
+        correctAnswerIndex: q.correctAnswerIndex,
+        explanation: q.explanation,
+        chosenIndex: chosen,
+        status: ans === true ? 'correct' : ans === false ? 'wrong' : 'skipped',
+      };
+    });
+
+    const sessionRecord: SessionRecord = {
+      id: `session-${Date.now()}`,
+      date: new Date().toISOString(),
+      category: isReviewSession ? 'Review Mistakes' : (selectedCategory === 'All' ? 'Mixed' : selectedCategory),
+      reviewMode,
+      correct: sessionCorrect,
+      wrong: sessionWrong,
+      skipped: shuffledQuestions.length - sessionCorrect - sessionWrong,
+      score: sessionScore,
+      questions: questionRecords,
+    };
+
+    const updatedHistory = [sessionRecord, ...sessionHistory].slice(0, HISTORY_LIMIT);
+    setSessionHistory(updatedHistory);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
 
     const newTotalXp = totalXp + addedXp;
     const newTestsTaken = testsTaken + 1;
@@ -590,9 +659,14 @@ export default function Home() {
                 <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 {t('syllabusTitle')}</h2>
                 <p className="text-xs text-slate-400 font-medium -mt-2">{t('syllabusDesc')}</p>
               </div>
-              <button onClick={openMaterialsView} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
-                📘 Study Materials
-              </button>
+              <div className="flex gap-2">
+                <button onClick={openMaterialsView} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+                  📘 Study Materials
+                </button>
+                <button onClick={() => setCurrentView('history')} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+                  📜 History
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
@@ -858,6 +932,14 @@ export default function Home() {
       {/* VIEW 3: FULL REPORT REVIEW SHEET (ALA ASSESSMENTDAY) */}
       {currentView === 'review' && (
         <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-slate-200 animate-fade-in flex flex-col items-center">
+          <div className="w-full sticky top-4 z-10 flex justify-start mb-2">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="px-4 py-2 rounded-xl bg-slate-900/95 hover:bg-slate-800 text-white text-sm font-semibold shadow-lg backdrop-blur-sm flex items-center gap-1"
+            >
+              ← {t('backToDashboard')}
+            </button>
+          </div>
           <span className="text-5xl mb-2">🏅</span>
           <h2 className="text-3xl font-black text-slate-900">{t('performanceReviewTitle')}</h2>
           <p className="text-sm text-slate-500 mt-1 mb-6 text-center">Analyze your answers item by item to discover mistakes and master structural logic traps.</p>
@@ -946,6 +1028,113 @@ export default function Home() {
           <button onClick={() => setCurrentView('dashboard')} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-md mt-8">
             {t('backToDashboard')}
           </button>
+        </div>
+      )}
+
+      {/* VIEW 4: SESSION HISTORY */}
+      {currentView === 'history' && (
+        <div className="w-full max-w-4xl space-y-6 animate-fade-in">
+          <div className="w-full sticky top-4 z-10 flex justify-start">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="px-4 py-2 rounded-xl bg-slate-900/95 hover:bg-slate-800 text-white text-sm font-semibold shadow-lg backdrop-blur-sm flex items-center gap-1"
+            >
+              ← {t('backToDashboard')}
+            </button>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-black text-slate-900">📜 Session History</h2>
+            <p className="text-sm text-slate-500">Lihat kembali soal-soal dari sesi sebelumnya beserta jawabanmu.</p>
+          </div>
+
+          {sessionHistory.length === 0 && (
+            <div className="text-center text-slate-400 text-sm font-medium py-16 bg-white border border-slate-200 rounded-2xl">
+              Belum ada riwayat sesi. Selesaikan satu drill dulu, nanti muncul di sini.
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {sessionHistory.map((session) => {
+              const isExpanded = expandedHistoryId === session.id;
+              return (
+                <div key={session.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => setExpandedHistoryId(isExpanded ? null : session.id)}
+                    className="w-full flex flex-wrap justify-between items-center gap-3 p-4 text-left hover:bg-slate-50/60 transition-all"
+                  >
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{session.category} Session</p>
+                      <p className="text-xs text-slate-400">
+                        {new Date(session.date).toLocaleString()} · {session.questions.length} soal
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-emerald-600">✅ {session.correct}</span>
+                      <span className="text-xs font-bold text-rose-600">❌ {session.wrong}</span>
+                      <span className="text-xs font-bold text-slate-400">⚠️ {session.skipped}</span>
+                      <span className="text-sm font-black text-indigo-600">{session.score} pts</span>
+                      <span className="text-slate-400 text-xs">{isExpanded ? '▲' : '▼'}</span>
+                    </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="border-t border-slate-100 p-4 space-y-4 bg-slate-50/40">
+                      {session.questions.map((q, idx) => (
+                        <div key={q.id + '-' + idx} className="p-4 border border-slate-200 rounded-xl bg-white">
+                          <div className="flex justify-between items-start gap-2 mb-2 flex-wrap">
+                            <span className="text-xs font-bold text-slate-500">
+                              {t('questionLabel')} #{idx + 1} · <span className="text-indigo-600">{q.subCategory}</span>
+                            </span>
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${
+                              q.status === 'correct'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : q.status === 'wrong'
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                            }`}>
+                              {q.status === 'correct' ? '✅ Correct' : q.status === 'wrong' ? '❌ Incorrect' : `⚠️ ${t('skipped')}`}
+                            </span>
+                          </div>
+
+                          <p className="text-sm font-semibold text-slate-800 leading-relaxed">{q.question}</p>
+
+                          {q.codeSnippet && (
+                            <pre className="bg-slate-900 text-slate-100 p-3 rounded-lg font-mono text-xs my-3 overflow-x-auto whitespace-pre-wrap">
+                              <code>{q.codeSnippet}</code>
+                            </pre>
+                          )}
+
+                          <div className="flex flex-col gap-2 mt-3">
+                            {q.options.map((opt, optIdx) => {
+                              let style = 'border-slate-200 bg-white text-slate-700';
+                              if (optIdx === q.correctAnswerIndex) {
+                                style = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold';
+                              } else if (q.chosenIndex === optIdx && optIdx !== q.correctAnswerIndex) {
+                                style = 'border-rose-400 bg-rose-50 text-rose-800 line-through';
+                              }
+                              return (
+                                <div key={optIdx} className={`p-2.5 border rounded-lg text-xs flex justify-between items-center ${style}`}>
+                                  <span>{opt}</span>
+                                  {optIdx === q.correctAnswerIndex && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100/50 px-1.5 py-0.5 rounded">{t('correctAnswerLabel')}</span>}
+                                  {q.chosenIndex === optIdx && optIdx !== q.correctAnswerIndex && <span className="text-[10px] font-bold text-rose-600 bg-rose-100/50 px-1.5 py-0.5 rounded">{t('yourChoiceLabel')}</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="bg-indigo-50/50 border border-indigo-100 p-3 rounded-xl text-xs text-slate-600 mt-3">
+                            <strong className="text-indigo-900 font-bold block mb-1">{t('solutionExplanationLabel')}</strong>
+                            {q.explanation}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

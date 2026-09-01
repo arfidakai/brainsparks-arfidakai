@@ -488,14 +488,14 @@ export default function Home() {
   const globalAccuracy = totalLifetimeAnswers > 0 ? ((lifetimeCorrect / totalLifetimeAnswers) * 100).toFixed(1) : '0.0';
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 sm:p-8 flex flex-col items-center">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans px-3 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-10 flex flex-col items-center">
       
       {/* VIEW 1: MAIN LEARNING DASHBOARD */}
       {currentView === 'dashboard' && (
-        <div className="w-full max-w-4xl space-y-8 animate-fade-in">
+        <div className="w-full max-w-6xl space-y-6 sm:space-y-8 animate-fade-in">
           
           {/* WELCOME CARD */}
-          <div className="w-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-800">
+          <div className="w-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 border border-slate-800">
               <div className="space-y-2 w-full md:w-auto">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
@@ -562,22 +562,22 @@ export default function Home() {
           )}
 
           {/* GLOBAL PERFORMANCE STATISTICS GRAPH ROW */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
               <div className="p-3 bg-blue-50 text-blue-600 rounded-xl text-xl">...</div>
               <div>
                 <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">{t('totalDrills')}</span>
                 <span className="text-2xl font-black text-slate-800">{testsTaken} <span className="text-xs font-medium text-slate-400">{t('sessions')}</span></span>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl text-xl">🎯</div>
               <div>
                 <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">{t('globalAccuracy')}</span>
                 <span className="text-2xl font-black text-slate-800">{globalAccuracy}%</span>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4 sm:col-span-2 xl:col-span-1">
               <div className="p-3 bg-amber-50 text-amber-500 rounded-xl text-xl">🔥</div>
               <div>
                 <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">{t('correctAnswers')}</span>
@@ -604,7 +604,7 @@ export default function Home() {
                   .slice(0, 8)
                   .map((item) => (
                     <div key={item.subCategory} className="flex items-center gap-3">
-                      <span className="text-xs font-semibold text-slate-600 w-36 sm:w-44 truncate" title={item.subCategory}>
+                      <span className="text-[11px] sm:text-xs font-semibold text-slate-600 w-24 sm:w-36 md:w-44 truncate" title={item.subCategory}>
                         {item.subCategory}
                       </span>
                       <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
@@ -630,16 +630,16 @@ export default function Home() {
               <h3 className="text-sm font-bold text-slate-800">{t('settingsTitle')}</h3>
               <p className="text-xs text-slate-400 font-medium">{t('settingsDesc')}</p>
             </div>
-            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto overflow-hidden">
                 <button 
                 onClick={() => setReviewMode('instan')}
-                className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${reviewMode === 'instan' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${reviewMode === 'instan' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
               >
                 {t('instantFeedback')}
               </button>
               <button 
                 onClick={() => setReviewMode('akhir')}
-                className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${reviewMode === 'akhir' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${reviewMode === 'akhir' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
               >
                 {t('assessmentStyle')}
               </button>
@@ -654,24 +654,24 @@ export default function Home() {
 
           {/* SYLLABUS CORE STUDY CARDS SECTION */}
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row justify-between items-start sm:items-center">
               <div>
-                <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 {t('syllabusTitle')}</h2>
-                <p className="text-xs text-slate-400 font-medium -mt-2">{t('syllabusDesc')}</p>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">🎯 {t('syllabusTitle')}</h2>
+                <p className="text-xs text-slate-400 font-medium -mt-1 sm:-mt-2">{t('syllabusDesc')}</p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={openMaterialsView} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button onClick={openMaterialsView} className="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
                   📘 Study Materials
                 </button>
-                <button onClick={() => setCurrentView('history')} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+                <button onClick={() => setCurrentView('history')} className="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
                   📜 History
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
 
               {/* TRACK 1: MIXED TOPICS */}
-              <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
+              <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 sm:p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
                 <div className="space-y-3">
                   <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📚</div>
                   <h3 className="text-lg font-bold text-slate-800">{t('mixedTitle')}</h3>
@@ -683,7 +683,7 @@ export default function Home() {
               </div>
 
               {/* TRACK 2: LOGIC & REASONING ONLY */}
-              <div className="bg-white border-2 border-amber-200 bg-amber-50/20 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
+              <div className="bg-white border-2 border-amber-200 bg-amber-50/20 rounded-2xl p-4 sm:p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
                 <div className="space-y-3">
                   <div className="w-12 h-12 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🧠</div>
                   <div className="flex items-center gap-2">
@@ -698,7 +698,7 @@ export default function Home() {
               </div>
 
               {/* TRACK 3: PROGRAMMING BASIC ONLY */}
-              <div className="bg-white border-2 border-blue-200 bg-blue-50/20 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
+              <div className="bg-white border-2 border-blue-200 bg-blue-50/20 rounded-2xl p-4 sm:p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
                 <div className="space-y-3">
                   <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💻</div>
                   <h3 className="text-lg font-bold text-slate-800">{t('programmingTitle')}</h3>
@@ -710,7 +710,7 @@ export default function Home() {
               </div>
 
               {/* TRACK 4: REVIEW MISTAKES */}
-              <div className="bg-white border-2 border-rose-200 bg-rose-50/20 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
+              <div className="bg-white border-2 border-rose-200 bg-rose-50/20 rounded-2xl p-4 sm:p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group">
                 <div className="space-y-3">
                   <div className="w-12 h-12 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🔁</div>
                   <h3 className="text-lg font-bold text-slate-800">{t('reviewMistakesTitle')}</h3>
@@ -944,7 +944,7 @@ export default function Home() {
           <h2 className="text-3xl font-black text-slate-900">{t('performanceReviewTitle')}</h2>
           <p className="text-sm text-slate-500 mt-1 mb-6 text-center">Analyze your answers item by item to discover mistakes and master structural logic traps.</p>
 
-          <div className="w-full grid grid-cols-4 gap-3 mb-8 text-center">
+          <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 text-center">
             <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
               <span className="block text-xs font-bold text-emerald-700 uppercase">{t('correctPlus')}</span>
               <span className="text-2xl font-black text-emerald-600">{stats.correct}</span>

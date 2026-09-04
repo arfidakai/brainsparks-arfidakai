@@ -171,9 +171,7 @@ print(colors[1])`,
     correctAnswerIndex: 2,
     explanation: 'This is the Fibonacci sequence, where each number is the sum of the two preceding ones. 8 + 13 = 21.'
   },
-
-  // --- ADDITIONAL PROGRAMMING & TECH CONCEPTS ---
-  {
+ {
     id: 'p4',
     category: 'Programming',
     subCategory: 'Bitwise Operators',

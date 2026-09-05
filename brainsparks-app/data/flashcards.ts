@@ -213,6 +213,8 @@ print(5 << 1)`,
   },
 
   // --- CRYPTARITHM ---
+  // --- CRYPTARITHM ---
+ 
   {
     id: 'l9',
     category: 'Logic',

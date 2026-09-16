@@ -147,7 +147,8 @@ print(colors[1])`,
     correctAnswerIndex: 1,
     explanation: 'Replacing or rewriting a method belonging to a superclass inside a subclass is known as Method Overriding (declared with the "override" keyword in Swift).'
   },
-  // --- ADDITIONAL LOGIC & REASONING ---
+  // --- ADDITIONAL LOGIC & REASONING 
+  //--hari ini gw udh dapet invite buat online test---
  
   {
     id: 'l7',

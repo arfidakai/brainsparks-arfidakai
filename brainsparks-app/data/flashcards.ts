@@ -149,6 +149,7 @@ print(colors[1])`,
   },
   // --- ADDITIONAL LOGIC & REASONING 
   //--hari ini gw udh dapet invite buat online test---
+  //--besok bismillah mulai review dan jadwalin mau kapan test nya ya, lebih cepat lebih baik biar ga keburu lupa materi nya, dan bisa lebih fokus review materi yang belum dikuasai
  
   {
     id: 'l7',

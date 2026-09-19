@@ -217,6 +217,8 @@ print(5 << 1)`,
 
   // --- CRYPTARITHM ---
   // --- CRYPTARITHM ---
+  // --- CRYPTARITHM ---
+  // --- CRYPTARITHM ---
  
   {
     id: 'l9',
